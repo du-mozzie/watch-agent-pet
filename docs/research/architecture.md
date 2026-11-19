@@ -106,9 +106,15 @@ Android 包名 `com.owapet.sensorprobe` 与原 debug.keystore 保留，避免改
 
 验证入口：`npm run check`、`npm test`、`npm run test:desktop`、`npm run pack`。三个 PC 系统分别构建和测试，Windows 验证不能替代 macOS/Linux 验证。硬件脚本须保持 UTF-8 BOM 并通过 PowerShell 5.1 解析；真机测试由用户执行。
 
-## 6. 后续落地
+## 6. 后续落地（2026-11-19 定稿，详见 AGENT.md §12 计划指针）
 
-当前已完成多包分层、静态插件运行时、模拟链路、PC 展示及本地存储。下一阶段按实测接通 OPPO 采集链路，验证 P2/P3/P4/P9；随后接入第二款手表和其他 PC 系统，检验可替换边界。详细现状、命令和插件步骤见[开发指南](../development/desktop-runtime.md)。
+已完成：多包分层（v4）、静态插件运行时、模拟链路端到端、PC 展示与本地 JSONL 采集。
+
+**M1b（当前阶段）——手表数据采集，打通第一条真实链路**：T1 手表采集 App 骨架（Gradle、亮屏采集窗口、前台服务、免权限 RAW 传感器、端上聚合 1Hz 健康帧）→ T2 手表 Wi-Fi 上报（真网络 transport：单端 connect/accept，替换成对 open 模拟接口）→ T3 PC 真机 DeviceAdapter → T4 稳定性实测（P2/P3/P4）→ T5 悬案收口与通道决策（H1 成品通道手持复测、P9 BLE PoC）。
+
+**M1c**：断线恢复与补传（协议 ACK）、看板趋势图与数据导出、功耗打磨、稳定性准入（7 天不中断）。
+
+**M2 评估位**：Agent 状态接入 PC（agent-state 扩展位）、自定义模型分析、第二机型/PC 系统、组件中心。
 
 项目与当前工作区名称为 watch-agent-pet；Git 远程仓库重命名是独立操作，本次未修改。
 

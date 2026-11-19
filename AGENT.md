@@ -228,22 +228,65 @@ getevent 判读：`KEY_F1`（侧边功能键）与 `EV_REL REL_WHEEL`（表冠�
 
 - **离腕门控混淆**：LLOB/PPG_WEAR 检测未佩戴时 HAL 可能暂停 PPG 类传感器——停靠位零回调 ≠ HAL 拦截第三方，需 Wi-Fi 手持位复测区分。
 
-## 12. 计划指针（M0 · PoC 清单状态）
+## 12. 计划指针（M0 ✅ → M1b 手表数据采集 → M1c 稳定性与数据价值）
 
-| # | 验证项 | 状态 | 载体 |
+### 12.0 里程碑总览
+
+| 阶段 | 目标 | 状态 |
+|---|---|---|
+| M0 探针验证 | 传感器/按键边界实证 | ✅ 完成（见 12.1） |
+| M1a 桌面与模拟链路 | 插件运行时 + 桌宠展示 + 本地采集（模拟数据端到端） | ✅ 完成 |
+| **M1b 手表数据采集** | **真机 OPPO → PC 端到端真实数据**（本阶段，见 12.2） | 🔄 计划已定 |
+| M1c 稳定性与数据价值 | 断线恢复、看板趋势、功耗（见 12.3） | ⏸ |
+| M2 后期扩展 | Agent 状态接入 PC / 自定义模型分析 / 第二机型 | ⏸ 评估位 |
+
+### 12.1 M0 PoC 结论（已完成，实测依据）
+
+| # | 验证项 | 结论 | 载体 |
 |---|---|---|---|
-| P1 | 按键事件能否被 App 截获 | ✅ **完成**（r2：功能键=KEY_F1，表冠旋转=REL_WHEEL 相对轴 ±1） | [报告 r2 §1](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
-| P0+ | 私有 sensor 出数与频率 | ✅ **完成**（r2：12路 PPG_RAW 246.7Hz + ECG_RAW 52.7Hz + 腕温 98.5Hz 全部免权限直读；血氧/心率/ECG 成品停靠位零回调待手持复测；亮屏门控已实证） | [报告 r2 §2-3](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
-| P2 | 前台服务保活（8h 断流 ≤1 次） | 🔄 **紧迫性提升**：r2 实证灭屏即杀 App 进程，需前台服务才能常驻 | 采集 App 骨架 |
-| P3 | 常亮/抬腕功耗 | ⏸ | — |
-| P4 | Wi-Fi 长连稳定性（24h 断连 <3 次） | ⏸ 需 PC 桥接 | — |
-| P5 | 麦克风录音 | ⏸ | — |
-| P6 | 音频播放与音量 | ⏸ | — |
-| P7 | 32 位 runtime（wasm3/QuickJS） | ⏸ 组件中心阶段 | — |
-| P8 | 官方「自定义按键」指向 App | ⏸ 真机会话可顺带人工验证 | — |
-| P9 | **BLE GATT server 可行性**（ColorOS Watch 第三方 App）| 🔄 新增，决定主通道 | [transport-selection.md §4](docs/research/transport-selection.md) |
+| P1 | 按键事件能否被 App 截获 | ✅ 功能键=KEY_F1；表冠旋转=REL_WHEEL 相对轴 ±1 | [报告 r2 §1](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
+| P0+ | 私有 sensor 出数与频率 | ✅ 12路 PPG_RAW 246.7Hz + ECG_RAW 52.7Hz + 腕温 98.5Hz 全部免权限直读；亮屏门控实证（灭屏零回调+杀进程）；血氧/心率/ECG 成品停靠位零回调→悬案 H1 | [报告 r2 §2-3](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
+| P5/P6/P7/P8 | 录音/播放/32位runtime/自定义按键 | ⏸ 后期评估（定位反转后优先级降） | — |
 
-**真机验证通过后的开发顺序**（M0 → M1b）：① 手表健康采集 App 骨架（Gradle 工程、亮屏采集窗口、前台服务、Wi-Fi 长连上报）→ ② P2/P3/P4/P9 稳定性实测与 BLE 决策 → ③ 后期评估 Agent 状态接入 PC 与自定义模型分析。
+**M0 遗留悬案**：H1 成品通道（血氧/心率/ECG 成品）手持位是否出数——归入 M1b T5 收口。
+
+### 12.2 M1b：手表数据采集（当前阶段，2026-11-19 定稿）
+
+**目标**：真机 OPPO 亮屏采集健康数据 → Wi-Fi 上报 → PC 桌宠/看板展示 + JSONL 落盘，端到端真实数据。
+
+| # | 任务 | 内容 | 真机依赖 | 验收标准 |
+|---|---|---|---|---|
+| **T1** | 手表采集 App 骨架 | 正式 Gradle 工程（替代探针的临时 build.ps1 流程）：亮屏采集窗口 + 前台服务（indicator 常驻）+ 免权限 RAW 传感器（PPG_RAW×12 / ECG_RAW_PRO / 腕温）直读；**端上聚合**（滑窗均值）把 246Hz 原始流降为 ~1Hz 健康帧 | 构建无需真机；验证需 | 亮屏下 logcat 可见聚合健康帧（数值合理）；灭屏自动暂停、亮屏恢复；前台服务 8h 存活（=P2） |
+| **T2** | 手表 Wi-Fi 上报 | App 作 WebSocket client 连 PC。PC 侧新增**真网络 transport**（单端 connect/accept 分离，替换成对 open 模拟接口——架构预留的演进点）；先绑局域网、令牌握手 | 需真机 | bridge/desktop 收到真机帧并落盘 JSONL |
+| **T3** | PC 真机适配器 | `device-access/oppo-watch-4-pro` 实现 JS DeviceAdapter（注册 oppo profile）+ 真机配置样例更新 | 需真机 | UI 切到真机 profile：看板显示真机数值、采集目录正常写盘、断连恢复 |
+| **T4** | 稳定性实测 | P2（前台服务 8h 断流 ≤1 次）、P4（Wi-Fi 24h 断连 <3 次 + 断线自动恢复）、P3（功耗：日耗电可接受） | **需用户** | 按各准出标准；报告写 probe-report-r3 |
+| **T5** | 悬案收口 + 通道决策 | H1 手持位复测（血氧/心率/ECG 成品是否出数→决定采集通道清单）；P9 BLE GATT server PoC→通道决策更新 transport-selection.md | **需用户** | 两个明确结论入库 |
+
+**执行顺序与并行**：T1 纯本地开发可立即开工；T2 的 PC 侧 transport 可先用 simulator 联调（不需要真机）；T3 依赖 T1/T2 就绪；T4/T5 需约用户真机会话（§6 剧本）。
+
+**风险与对策**（基于 M0 实测事实）：
+- 亮屏门控 → 采集设计为「亮屏采集、灭屏暂停」，**不对抗 ROM 省电策略**；数据新鲜度在 UI 如实展示
+- 停靠即致盲 → 产品口径「白天佩戴采集」；桌宠在停靠位只展示不采集
+- P9 BLE 失败 → 回退 Wi-Fi 为主（工位场景可用）；通道可插拔设计保证切换成本仅 transport 层
+- 前台服务被杀 → 崩溃自动重启重连（JobScheduler/ScheduledWork 兜底）+ 断线补传（协议 ACK 扩展位）
+- Wi-Fi 不支持 Portal 认证网络（官方限制）→ 文档明示
+
+### 12.3 M1c：稳定性与数据价值（后续）
+
+- 断线恢复与补传：协议 ACK/重放落地（contracts/protocol.md 目标）；断连期间手表本地缓存（有界）、恢复后补传
+- 看板趋势：读 JSONL 历史画当日/近 7 天曲线；数据导出（CSV/JSON）
+- 功耗打磨：采样窗口调度（抬腕优先）、聚合频率分级
+- 第二通道落地：依 T5 决策（BLE 或 Wi-Fi 优化）
+- 稳定性准入：连续 7 天采集不中断、日耗电可接受
+
+### 12.4 M2：后期扩展（评估位，未排期）
+
+- **Agent 状态接入 PC**：Claude Code（HTTP hooks）/ Qoder / Codex / WorkBuddy / 豆包 → PC 端展示（agent-state 协议扩展位已预留）
+- **自定义模型分析**：配置用户自己的模型（本地/云）分析采集数据
+- 第二机型 / 第二 PC OS：验证 v4 可替换边界（新增 device-access/<机型> 或 platforms 适配）
+- 组件中心（原 M3 设想）：定位反转后降为低优先级评估项
+
+**当前活动任务**：M1b T1 手表采集 App 骨架（无真机依赖，可直接开工）。
 
 ---
 

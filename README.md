@@ -82,7 +82,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File packages/device-access/oppo-
 
 adb 放在 tools/platform-tools/ 或 PATH；SDK 可放在根目录 android-sdk/，或用构建参数指定。Windows 双击入口位于设备 tools 目录。
 
-下一步接入真实手表通信与可靠链路，完成配对与 BLE 验证；之后再评估 Agent 状态接入与自定义模型分析。Windows/macOS/Linux 已配置独立 CI 构建，其他系统的实际运行结果以对应验证为准。
+下一步 **M1b：手表数据采集**——真机采集 App（亮屏采集+前台服务）→ Wi-Fi 上报 → PC 展示落盘，含稳定性实测与 BLE 通道决策（详见 [AGENT.md §12](AGENT.md) 开发计划）；之后再评估 Agent 状态接入与自定义模型分析。Windows/macOS/Linux 已配置独立 CI 构建，其他系统的实际运行结果以对应验证为准。
 
 项目与当前工作区名称为 watch-agent-pet；Git 远程地址未自动改名。
 
