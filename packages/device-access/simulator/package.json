@@ -1,0 +1,14 @@
+{
+  "name": "@watch-agent-pet/device-simulator",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": "./plugin.js",
+  "dependencies": {
+    "@watch-agent-pet/contracts": "0.1.0"
+  }
+}

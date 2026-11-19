@@ -1,127 +1,115 @@
-# watch-agent-pet 总体架构（v3，2026-11-19；同日修订：移除 Agent 状态跟随）
+# watch-agent-pet 总体架构（v4，2026-11-19）
 
-本文是目录与模块边界的权威规范。目标：按配置接入不同手表、替换通信方案、支持 Windows/macOS/Linux PC，让 PC 桥接和展示分别演进。
+本文是目录与依赖边界的权威规范。当前产品是手表健康采集、PC 桌宠展示及本地 JSONL 存储；Agent 状态接入 PC 与模型分析是后期扩展，不向手表下发 Agent 状态。
 
-**产品定位（2026-11-19 修订）**：手表上报健康数据，PC 桌宠展示并采集到本地（数据目录可配置）；Agent 状态不下发手表（已移除）；Agent 状态接入 PC 与自定义模型分析为后期扩展。
-
-## 1. 现状与范围
-
-已实现：OPPO 探针、Electron PC 客户端、配置加载器、静态插件注册表、两种模拟设备、memory 与本机 WebSocket 链路、健康数据本地采集（JSONL 按天、目录可配置可热切换）。实现范围和启动方式见[开发指南](../development/desktop-runtime.md)。正式手表 App、BLE、LAN 配对及完整 Wire 可靠性仍待实现；跨系统 CI 已配置，需分别运行验证。
-
-v2 的问题：watch 默认等于 OPPO Android；pc 混合业务、平台和 UI；Transport 同时承担 JSON 与连接职责；机型资料散落全局；协议禁止分片却又要求 BLE 拆包。v3 分别隔离这些变化点。
-
-## 2. 分层与依赖
+## 1. 分层与依赖
 
 ```mermaid
-flowchart TB
-  Config[部署配置] --> Boot[应用装配入口]
-  Boot --> Desktop[PC 展示 / 桥接宿主]
-  Boot --> Watch[手表应用宿主]
-  Desktop --> Core[业务核心与端口]
-  Watch --> Core
-  Agents[Agent 来源适配] --> Core
-  Device[设备适配] --> Core
-  OS[PC 系统适配] --> Core
-  Core --> Model[领域消息契约]
-  Session[连接会话 / 可靠投递] --> Model
-  Session --> Codec[协议编解码]
-  Session --> Transport[字节传输通道]
-  Watch --> Session
-  Desktop --> Session
+flowchart TD
+  Desktop[apps/desktop · PC 展示宿主] --> Runtime[packages/runtime · 运行层]
+  Bridge[apps/bridge · 无窗口宿主] --> Runtime
+  Desktop --> Device[packages/device-access · 设备插件]
+  Bridge --> Device
+  Runtime --> Contracts[packages/contracts · 公共契约]
+  Device --> Contracts
 ```
 
-箭头表示编译期依赖。核心定义所需端口，适配器实现端口；只有应用装配入口知道具体实现。图示为逻辑模块，Android 与 PC 通过同一契约分别实现，不强求共享一种语言或运行时。Agents（Agent 来源适配）为后期扩展预留位，当前不注册实现。
+箭头是源码依赖。两个应用入口负责注册设备，运行层通过注册表调用设备接口，生产代码不导入具体品牌。设备采样回调进入运行层，再经过会话、编码、传输、健康服务与本地存储，最终由展示层订阅快照。设备实现不导入运行层 Session，也不接触 Electron。
 
-数据路径（v3 修订）：手表核心 → 健康采样 → 会话/编码/传输 → PC 核心 → 桌宠/看板 UI，同时写入本地采集存储（JSONL，目录可配置）。Agent 来源 → AgentEvent → PC 端为后期扩展路径（不下发手表）。PC UI 从本地应用服务读取状态快照并订阅变化，不直接连接手表或读取私有 sensor。
+当前模拟链路在一个进程内托管采集端和接收端；真实手表将在设备端采集、通过网络向 PC 发送，届时应扩展单端连接接口，不要求 Android 与 PC 共用 JavaScript。
 
-## 3. 目录与职责
+## 2. 目录与包
 
 ```text
 watch-agent-pet/
-  apps/desktop/              PC 展示与桥接入口（Electron）
-  apps/watch/                正式手表应用入口（设计）
-  core/                      业务服务、错误类型、插件注册表
-  contracts/                 跨语言接口、Wire 协议草案
-  devices/oppo-watch-4-pro/
-    device.json              机型描述；区分候选与实测能力
-    probe/                   探针 APK 源码和构建脚本
-    tools/                   机型测试脚本、Windows 双击入口
-    docs/official/           官方资料汇编
-    docs/reports/            脱敏报告、dump
-    docs/tutorials/          机型接入与探针教程
-  connectivity/              本机会话、json codec、memory/WebSocket 通道
-  platforms/                 Electron PC 系统能力适配
-  integrations/              手动联调来源；真实 Agent 来源待实现
-  config/                    配置加载器、可运行 demo 与真机草案
-  docs/research/             架构、历史调研与通信决策
-  tools/                     仓库级工具与本地 platform-tools
-  results/                   原始实验输出，忽略入库
+  packages/
+    contracts/                    公共消息、错误、接口与 Wire 草案
+    device-access/                接入层，按机型组织
+      simulator/                  独立 npm 模拟设备插件
+      oppo-watch-4-pro/
+        collector/                Android 探针源码与构建脚本
+        tools/                    机型测试脚本
+        docs/                     官方资料、实测报告、教程
+        device.json               机型描述
+    runtime/                      独立 npm 运行层
+      index.js                    公共 API
+      runtime.js                  生命周期和资源装配
+      plugins/                    静态注册表
+      services/                   健康快照与订阅
+      connectivity/               Session / Codec / Transport
+      storage/                    JSONL 本地存储
+      config/                     配置加载与示例
+      integrations/               后期扩展说明
+      tests/                      运行层测试
+  apps/
+    desktop/                      独立 npm 展示层
+      main/                       Electron 主进程与装配
+      preload/                    受限 IPC
+      renderer/                   桌宠、看板、配置界面
+      platforms/                  PC 系统能力适配
+      tools/                      桌面打包
+      tests/                      桌面冒烟测试
+      package.json                桌面依赖与 Electron 构建配置
+    bridge/                       独立 npm 无窗口宿主
+  tools/                          仓库级语法和依赖边界检查
+  docs/                           架构与开发说明
+  package.json                    workspace 与统一命令
+  package-lock.json               统一依赖锁定
 ```
 
-只为已有代码/资料和必要说明建目录，不生成空插件工程。现有 Java 包 `com.owapet.sensorprobe` 保留，避免改变已安装探针身份；新代码使用中性项目命名，品牌仅进入设备实现。
+目前有五个 npm workspace：contracts、runtime、device-simulator、desktop、bridge。device-access 是接入层的分组目录，OPPO collector 是原生 Android 工程，不为了形式增加 Node 配置。未来每个 JavaScript 设备插件有自己的 package.json；原生采集工程使用对应工具链。
 
-## 4. 三类可替换点
+根目录保留 npm 配置是多包管理需要：根 manifest 不承载应用代码、Electron 配置或应用依赖；各包分别声明依赖与脚本，根目录统一安装、锁定和调度。npm 可将依赖提升到根 node_modules，这不改变包的责任边界。参见 [npm workspaces](https://docs.npmjs.com/cli/using-npm/workspaces/)。
 
-### 4.1 设备插件
+跨包使用包名与 exports，不使用 `../../` 访问其他包内部文件。`npm run check` 检查语法、依赖声明、跨包相对路径和 Electron 泄漏。runtime 的 simulator 依赖仅供测试使用。
 
-DeviceAdapter 提供设备描述、运行时能力探测、标准输入事件、采集和生命周期。私有传感器编号、ABI/API、屏幕限制、权限、后台策略与厂商 SDK 均在机型目录下。相同 Android 行为待第二个机型接入后再提取公共实现。
+## 3. 可替换点
 
-能力区分 supported / unsupported / unknown / permission-required / temporarily-unavailable。健康值携带单位、采样时间、质量和设备标识；未佩戴、权限拒绝、数据过期不能转换成数值 0。UI 按能力启用功能，不能出现品牌判断分支。
-
-配置 profile 选择驱动，instanceId 标识具体设备；连接后核验型号与运行时，不能把同一驱动默认为同一物理设备。接入不同 OS 的手表可能需要新应用宿主与语言实现，配置不能使不兼容二进制跨系统运行。
-
-### 4.2 通信插件
-
-| 层 | 职责 | 禁止混入 |
+| 扩展点 | 放置位置 | 装配方式 |
 |---|---|---|
-| Session | 配对、协商、心跳、重连、有界缓存、去重、主备切换 | OS 蓝牙调用、业务渲染 |
-| Codec | 标准消息与字节互转，如 json-v1 | 连接与重试 |
-| Transport | 字节收发、MTU 分片重组、背压，如 ble-gatt/websocket | 健康和 Agent 业务语义 |
+| 手表硬件 | packages/device-access/<机型> | 宿主注入设备插件，配置选择 profile / instanceId |
+| 字节传输 | runtime/connectivity/transports | 注册 Transport，配置选择通道 |
+| 消息编码 | runtime/connectivity | 注册 Codec，配置选择协议 ID |
+| PC 系统能力 | apps/desktop/platforms | 平台适配器报告能力与权限 |
+| 展示方式 | apps/desktop 或新增应用宿主 | 消费 runtime 公共 API |
 
-通道交付完整字节消息，报告最大长度与链路能力。BLE 与 WebSocket 可用同一 codec；更换 JSON/CBOR 是换 codec，不能偷偷在 BLE 内改变消息语义。协议语义升级必须同步变更契约与双方实现，不能保证只换 codec 即兼容。
+DeviceAdapter 当前实现 `describe()`、`start({onSample,onError})`、`stop()`；采样含指标、值、单位、时间和质量，运行层封装会话消息。设备能力与数据质量决定界面可用项，不在 UI 添加品牌判断，不把不可用数据伪造为 0。stop 必须释放采集资源。
 
-一条会话只有一个活动控制通道。切换：暂停新发送 → 关闭旧通道与订阅 → 按退避策略连接候选 → 鉴权/版本协商 → 恢复快照及允许补发的数据。失败进入离线；防止旧回调污染新会话或双通道重复执行命令。只使用配置允许的通道，不从加密连接静默降级到明文。
+Session 管理消息身份、序号和订阅，Codec 管理消息与字节转换，Transport 负责字节收发和关闭。目标中的 BLE 分片、远程配对、ACK、心跳、退避重连仍待实现；当前只实现 memory 和绑定 127.0.0.1 的 loopback-websocket。`open()` 返回成对连接用于模拟，不代表 LAN/BLE 接入已完成。
 
-BLE 优先只是 OPPO 的待验证策略（P9），不是全局事实。开发先用模拟通道；音频能力不足时返回明确不可用原因，或根据用户配置切换到 Wi-Fi。
+Windows/macOS/Linux 通过 Electron 平台适配隔离剪贴板、置顶、通知等能力。蓝牙、麦克风和输入注入等未实现能力返回 unsupported。渲染进程禁用 Node，通过受限 preload/IPC 访问主进程，不直接操作设备或文件系统。
 
-### 4.3 PC 系统插件
+## 4. 生命周期与配置
 
-HostPlatform 隔离托盘、窗口置顶、通知、自动启动、凭据存储、麦克风和文本输入；蓝牙实现通过系统适配边界访问 OS。Windows/macOS/Linux 分别报告能力和权限，不支持自动注入时提供复制文本入口。
+宿主注入可信插件 → 加载配置 → 校验插件 ID / API 版本 / 组合兼容性 → 运行层创建采集与通信资源 → 健康服务更新快照并写入本地数据 → UI 订阅。
 
-UI 仅依赖 DesktopService 的查询/订阅/命令接口。M1a 选择 Electron 宿主，使 PC 业务和插件共用 JavaScript；这替代了早期 Tauri 候选，Android 仍独立实现契约。桥接先作为同一进程中的独立模块；以后可经带鉴权的本地 IPC 拆成守护进程，不必现在引入微服务。
+配置只引用静态注册 ID，不动态 import 任意磁盘脚本。首版只启用一个设备；设备/通道热切换串行关闭旧资源并隔离旧回调；仅在配置允许时尝试备用通道。本地存储目录可以独立热切换，写盘失败报告状态而不中断采集。
 
-## 5. 配置与装配
+默认配置是 [demo.json](../../packages/runtime/config/demo.json)。桌面持久化配置位于 Electron userData；[真机配置草案](../../packages/runtime/config/runtime.example.json)包含尚未注册的方案，导入会拒绝。OPPO 探针暂不读取 PC 配置。
 
-见 [配置样例](../../config/runtime.example.json)和[接口契约](../../contracts/ports.md)。PC 使用 config/demo.json 及用户目录中的持久配置；OPPO 探针仍不读取这些配置。
+桌面在主进程内装配运行层；bridge 在纯 Node.js 内装配相同运行层，两者没有相互导入。bridge 当前不是服务端，后续若拆守护进程需新增带鉴权的本地 IPC。
 
-启动顺序：校验 schemaVersion → 查询静态注册表 → 检查设备/OS/codec/transport 组合 → 探测权限和硬件 → 装配 → 配对连接 → UI 展示实际能力。未知插件、重复 instanceId、无共同协议版本要明确失败；只有配置允许且能力支持的候选才可回退。
+## 5. 迁移与验证
 
-首版采用编译期注册插件，通过配置选择，不加载任意磁盘脚本或动态库。配置为未来多设备预留数组，首版仅启用一个设备。PC 已支持设备与通道热切换，并串行关闭旧资源、隔离旧回调。密钥放 OS 凭据库，配置仅保存引用；首次配对需用户确认，后续核验身份；日志默认不保存健康原始数据和语音。
+| 原位置 | 新位置 |
+|---|---|
+| devices | packages/device-access |
+| devices/oppo-watch-4-pro/probe | packages/device-access/oppo-watch-4-pro/collector |
+| core、connectivity、config、integrations | packages/runtime 对应职责目录 |
+| contracts、core/errors.js | packages/contracts |
+| apps/desktop/runtime.js、health-store.js | packages/runtime、runtime/storage |
+| apps/desktop/bridge-cli.js | apps/bridge/main.js |
+| apps/desktop/presentation、platforms | apps/desktop/renderer、platforms |
+| tools/package-desktop.js、desktop-smoke.js | apps/desktop/tools、tests |
 
-## 6. 扩展验收
+Android 包名 `com.owapet.sensorprobe` 与原 debug.keystore 保留，避免改变安装身份。根 results 保留。旧 apps/watch 只有设计占位说明，现合并到接入层说明；未来正式采集 App 放在对应机型下。
 
-| 场景 | 允许改动范围 | 验收 |
-|---|---|---|
-| 同运行时新机型 | devices、注册项、配置 | 模拟设备替代 OPPO，核心/UI 无品牌判断 |
-| 新手表 OS | 以上 + apps/watch 对应宿主 | 共同消息测试向量通过 |
-| BLE 换 WebSocket | transport、配置 | 相同消息投递，切换不重复控制 |
-| JSON 换其他编码 | codec、协商、配置 | 消息往返一致，不改 sensor/UI |
-| 新 PC 系统 | platforms、构建打包 | 对应系统 CI 构建，权限拒绝可降级 |
-| PC UI 改版 | apps/desktop 展示模块 | 用模拟应用服务独立运行 |
+验证入口：`npm run check`、`npm test`、`npm run test:desktop`、`npm run pack`。三个 PC 系统分别构建和测试，Windows 验证不能替代 macOS/Linux 验证。硬件脚本须保持 UTF-8 BOM 并通过 PowerShell 5.1 解析；真机测试由用户执行。
 
-## 7. 分阶段落地与迁移
+## 6. 后续落地
 
-1. 本次：展示名改为 watch-agent-pet；迁移机型资产、修正引用与脚本路径；落地契约和配置样例；同日修订产品定位——移除 Agent 状态跟随，手表只上报健康，PC 采集落盘（目录可配置）。
-2. M1a（已实现）：静态注册表、配置加载器、模拟设备、两种通道、健康数据本地采集与 Electron 展示，覆盖健康数据质量、采集目录热切换与通道热切换。
-3. M1b：接通一条实测可用链路；由用户验证 OPPO P2/P3/P4/P9，再加入第二条链路并测切换/恢复。
-4. M1c：接入第二款手表和第二种 PC OS，验证可替换边界；再评估后期扩展（Agent 状态接入 PC、自定义模型分析、语音、组件）。
+当前已完成多包分层、静态插件运行时、模拟链路、PC 展示及本地存储。下一阶段按实测接通 OPPO 采集链路，验证 P2/P3/P4/P9；随后接入第二款手表和其他 PC 系统，检验可替换边界。详细现状、命令和插件步骤见[开发指南](../development/desktop-runtime.md)。
 
-迁移：watch/sensor-probe → devices/oppo-watch-4-pro/probe；机型脚本和三组资料 → 对应 devices 子目录；pc → apps/desktop；shared → contracts。根目录 results 保留。
-
-项目展示名与当前工作区物理目录、Git 远程地址独立。物理目录仍为 oppo-watch-agent-pet，可关闭工作区后改名并重新打开；GitHub 仓库重命名属于独立外部操作。本地旧 probe/build 若存在，应连同 debug.keystore 迁移，避免改变测试安装签名。
-
-## 8. M1a 实现与目标架构的差异
-
-当前会话仅支持有序本机链路，以新 epoch/快照恢复；无 ACK 补发、自动重连或远程配对。Transport 的成对 open 是模拟测试宿主接口，后续真实设备将分离单端 connect/accept。完整目标仍见上文，不能将目标能力当作已实现功能。平台代码统一通过 Electron 适配，暂不拆重复的三份 OS 文件。
+项目与当前工作区名称为 watch-agent-pet；Git 远程仓库重命名是独立操作，本次未修改。
 
 > AI生成

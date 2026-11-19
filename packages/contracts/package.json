@@ -1,0 +1,14 @@
+{
+  "name": "@watch-agent-pet/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": "./messages.js",
+    "./errors": "./errors.js"
+  }
+}

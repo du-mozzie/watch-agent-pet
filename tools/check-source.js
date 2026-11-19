@@ -12,5 +12,6 @@ async function check(dir) {
     }
   }
 }
-for(const dir of ['apps','core','contracts','config','connectivity','devices/simulator','platforms','integrations','tests','tools'])await check(dir);
+for(const dir of ['apps','packages','tools'])await check(dir);
 console.log(`Syntax checked: ${count} files`);
+await import('./check-boundaries.js');

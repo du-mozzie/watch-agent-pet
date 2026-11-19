@@ -1,6 +1,6 @@
 # OPPO Watch 4 Pro × Agent 桌宠：设计调研
 
-> 本文保留 OPPO 场景的历史假设和选型，不代表已实现能力。最新模块边界以 [v3 总体架构](architecture.md)为准，协议以[当前草案](../../contracts/protocol.md)为准。
+> 本文保留 OPPO 场景的历史假设和选型，不代表已实现能力。最新模块边界以 [v3 总体架构](architecture.md)为准，协议以[当前草案](../../packages/contracts/protocol.md)为准。
 
 > 目标：以现有 OPPO Watch 4 Pro 的硬件为基础，复刻 HachimoDock 类「AI Coding 陪伴设备」的六项能力（Agent 状态跟随 / 语音输入 / 实时对话 / 形象与音效 / 组件中心 / 设备设置），同时**完整保留手表原有功能**，并支持对接 codex、claude code、qoder、豆包、workbuddy 多个 Agent 客户端。
 >
@@ -162,7 +162,7 @@ ColorOS Watch 对第三方 App 权限管得很紧（社区共识："OPPO 手表�
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-> **v2 修订（2026-11-19）**：传输层从「WebSocket 单通道」升级为**可插拔 transport**（BLE 主 + Wi-Fi 备），协议抽出为 [contracts/protocol.md](../../contracts/protocol.md) 单点权威；分层与目录规范见 [architecture.md](architecture.md)。
+> **v2 修订（2026-11-19）**：传输层从「WebSocket 单通道」升级为**可插拔 transport**（BLE 主 + Wi-Fi 备），协议抽出为 [contracts/protocol.md](../../packages/contracts/protocol.md) 单点权威；分层与目录规范见 [architecture.md](architecture.md)。
 
 ### 5.1 事件模型（建议固定，避免五个适配器各写一套）
 

@@ -1,7 +1,9 @@
-﻿# AGENT.md — 开发与测试流程
+# AGENT.md — 开发与测试流程
 
 > 本文件面向在本仓库工作的 AI 编码代理与人类贡献者，开工前必读。
-> 配套：[README.md](README.md)（项目定位）｜[docs/research/design-research.md](docs/research/design-research.md)（总体计划）｜[devices/oppo-watch-4-pro/docs/tutorials/](devices/oppo-watch-4-pro/docs/tutorials)（操作细节）
+
+> 配套：[README.md](README.md)（项目定位）｜[docs/research/design-research.md](docs/research/design-research.md)（总体计划）｜[packages/device-access/oppo-watch-4-pro/docs/tutorials/](packages/device-access/oppo-watch-4-pro/docs/tutorials)（操作细节）
+
 > 任何 Agent 拿到本仓库的会话，第一步是读本文件，第二步是查「§12 计划指针」确认当前进度，再动手。
 
 ---
@@ -9,10 +11,15 @@
 ## 0. 角色与总原则
 
 - 仓库主线：手表上报健康数据，PC 桌宠展示并采集到本地（数据目录可配置）；**当前阶段 M1a（桌面与模拟链路），真机仍为 M0**。
+
 - **Agent 状态跟随已移除（2026-11-19 决策）**：手表端不再接收六态下发；Agent 状态接入（Claude Code/Codex/豆包/Qoder → PC 端展示）与自定义模型分析为后期扩展。协议保留 agent-state 通道作扩展位；当前运行时不注册任何 agent 插件，配置含 agent 段会被拒绝。
+
 - 所有结论以**真机实测**为准；文档推断必须标注「待实测」。
+
 - 设备操作三红线：**不 root、不刷机、不换表盘**。脚本除「安装被测 App / 采集日志」这类测试动作外，对设备一律只读。
+
 - **真机测试永远请用户执行**：Agent 不自行要求连接设备；需要真机时，明确告知用户要做什么（放底座、开调试、跑哪个脚本），等用户完成并拿回结果。
+
 - **测试通过才 push**：对应功能的真机测试未通过前，只 commit 到本地，不 push 远程。
 
 ## 1. OPPO Watch 4 Pro 约束（不适用于其他设备）
@@ -38,50 +45,66 @@
 SDK 安装（一次性，约 110MB）：
 
 ```powershell
+
 # sdkmanager 在 cmdline-tools\latest\bin；SDK 根建议放在仓库根目录下 android-sdk（.gitignore 已忽略）
+
 $env:JAVA_HOME = '<jdk17 目录>'
+
 ("y`n" * 10) | & <sdkmanager.bat> --licenses
+
 & <sdkmanager.bat> 'platforms;android-30' 'build-tools;34.0.0'
+
 ```
 
-## 3. 仓库结构（v3）
+## 3. 仓库结构（v4，workspace 分层）
 
 结构权威：[总体架构](docs/research/architecture.md)。
 
-- `apps/`：PC 与手表产品入口（实现状态见开发指南）。
-- `core/`：领域模型、用例与端口（实现状态见开发指南）。
-- `devices/<机型>/`：设备适配、探针、测试工具、教程、官方资料和实测报告。
-- `connectivity/`：会话、codec、transport 分离（实现状态见开发指南）。
-- `platforms/`：Windows/macOS/Linux 系统适配（实现状态见开发指南）。
-- `integrations/`：Agent 来源适配（实现状态见开发指南）。
-- `contracts/`：语言无关接口和 Wire 协议草案。
-- `config/`：配置样例（含加载器与 demo 配置）。
-- `docs/research/`：架构和历史调研；`tools/`：仓库级工具及本地 adb。
+- `packages/device-access/<机型>/`：硬件采集与插件、测试工具、配套资料；OPPO 原生探针在 `collector/`。
+- `packages/runtime/`：插件运行时、服务、通信、配置与本地存储。
+- `packages/contracts/`：公共消息、错误和跨语言协议契约。
+- `apps/desktop/`：Electron 展示层及 PC 平台适配，拥有独立依赖与打包配置。
+- `apps/bridge/`：独立无窗口运行入口，不依赖桌面包。
+- `docs/`：设计与开发文档；`tools/`：仓库级检查及本地 adb。
 
-PC 客户端与模拟插件已可运行，详见 [开发指南](docs/development/desktop-runtime.md)。真实 OPPO 通信与 BLE 尚未实现。PC 开发要求 Node.js 22.12+；提交前运行 npm run check、npm test、npm run test:desktop，打包用 npm run pack。
+根 package.json 仅编排 npm workspaces 与统一命令；依赖声明在各包，锁文件统一保留根目录。禁止跨包相对路径导入。运行层生产代码不依赖具体设备或 Electron，接入插件只依赖契约。
+
+真实 OPPO 通信与 BLE 尚未实现。PC 开发要求 Node.js 22.12+；提交前运行 npm run check、npm test、npm run test:desktop，打包用 npm run pack。真机操作仍由用户执行。
 
 ## 4. 构建流程
 
 ```powershell
-cd devices\oppo-watch-4-pro\probe
+
+cd packages\device-access\oppo-watch-4-pro\collector
+
 powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
+
 # 可选参数：-SdkPath <sdk目录> -JavaHome <jdk目录>（不传则自动探测）
+
 ```
 
-- 产物：`devices/oppo-watch-4-pro/probe/build/sensor-probe-debug.apk`（当前 ~12KB）
+- 产物：`packages/device-access/oppo-watch-4-pro/collector/build/sensor-probe-debug.apk`（当前 ~12KB）
+
 - 构建在 `%TEMP%` 的 ASCII 暂存目录内进行，规避中文路径与原生工具的兼容问题
+
 - **为什么不用 Gradle**：探针级 APK 零依赖，Gradle 拉取（发行版+AGP+依赖）远重于产出；正式宠物 App（M1 起）再上 Gradle
 
 **本地静态校验（无需设备，Agent 可独立完成）**：
 
 ```powershell
+
 & <build-tools>\aapt2.exe dump badging build\sensor-probe-debug.apk   # package/sdkVersion/uses-feature 正确性
+
 # apksigner verify 已在 build.ps1 内置；检查 minSdk=27/target=30/watch feature
 
 # 脚本编码防回归（§10 坑 1）：所有 .ps1 必须带 BOM 的 UTF-8，改完必跑两项校验：
+
 #   ① PS 5.1 解析 0 错误；② 前 3 字节为 UTF-8 BOM（EF BB BF）
+
 $e=$null; [System.Management.Automation.Language.Parser]::ParseFile('<脚本路径>',[ref]$null,[ref]$e); $e.Count
+
 ([System.IO.File]::ReadAllBytes('<脚本路径>')[0..2] | ForEach-Object { $_.ToString('X2') }) -join ' '   # 应为 EF BB BF
+
 ```
 
 ## 5. 测试分层
@@ -101,15 +124,18 @@ $e=$null; [System.Management.Automation.Language.Parser]::ParseFile('<脚本路�
 | 位 | adb 通道 | 能验证什么 | 局限 |
 |---|---|---|---|
 | **停靠位**（默认） | 底座 USB | ✅ 核心问题「HAL 是否向第三方喂回调」＋P1 按键 | 表背贴充电器，PPG/ECG 值为零/噪声（无效值）；腕温读到的是充电器表面温度 |
-| **手持/佩戴位** | Wi-Fi adb（`devices/oppo-watch-4-pro/tools/adb-wifi.ps1` 开启，拔线后手持/戴腕） | ✅ 全部：回调＋真实数值（PPG 见活体、ECG 表背贴掌＋指按表冠） | 手表需与 PC 同局域网；不支持 Portal 认证网络 |
+| **手持/佩戴位** | Wi-Fi adb（`packages/device-access/oppo-watch-4-pro/tools/adb-wifi.ps1` 开启，拔线后手持/戴腕） | ✅ 全部：回调＋真实数值（PPG 见活体、ECG 表背贴掌＋指按表冠） | 手表需与 PC 同局域网；不支持 Portal 认证网络 |
 
 **停靠位零回调的歧义警告**：表上有离腕检测（LLOB/PPG_WEAR），检测到未佩戴时 HAL 可能暂停 PPG 类传感器——停靠模式下「无回调」分不清是「HAL 拦第三方」还是「没戴暂停」。停靠测出零回调时，必须用 Wi-Fi 模式手持复测才能下结论。
 
-用户只需一条命令（或双击 `devices/oppo-watch-4-pro/tools/device-test.bat`）：
+用户只需一条命令（或双击 `packages/device-access/oppo-watch-4-pro/tools/device-test.bat`）：
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File devices\oppo-watch-4-pro\tools\device-test.ps1
-# 升级到手持/佩戴位：先跑 devices\oppo-watch-4-pro\tools\adb-wifi.ps1（拔线拔座），再跑 device-test.ps1
+
+powershell -NoProfile -ExecutionPolicy Bypass -File packages\device-access\oppo-watch-4-pro\tools\device-test.ps1
+
+# 升级到手持/佩戴位：先跑 packages\device-access\oppo-watch-4-pro\tools\adb-wifi.ps1（拔线拔座），再跑 device-test.ps1
+
 ```
 
 脚本自动完成：等设备 → **P1 按键采集**（提示用户转表冠/按功能键/按表冠/抬腕，`getevent -l` 录 25 秒）→ 安装探针 APK → `pm grant` 授权 → 拉起 App → 录 `logcat -s PROBE STATS` 20 秒 → 抓 `dumpsys sensorservice` 中 owapet 的注册行 → 汇总。
@@ -120,7 +146,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File devices\oppo-watch-4-pro\too
 
 ## 7. 结果判读与处理回路
 
-判读依据 [devices/oppo-watch-4-pro/docs/tutorials/03-minimal-sensor-apk.md](devices/oppo-watch-4-pro/docs/tutorials/03-minimal-sensor-apk.md) 与 [报告 r2 §3](devices/oppo-watch-4-pro/docs/reports/probe-report-r2.md)：
+判读依据 [packages/device-access/oppo-watch-4-pro/docs/tutorials/03-minimal-sensor-apk.md](packages/device-access/oppo-watch-4-pro/docs/tutorials/03-minimal-sensor-apk.md) 与 [报告 r2 §3](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md)：
 
 | logcat 现象 | 结论 | 动作 |
 |---|---|---|
@@ -134,55 +160,80 @@ powershell -NoProfile -ExecutionPolicy Bypass -File devices\oppo-watch-4-pro\too
 
 getevent 判读：`KEY_F1`（侧边功能键）与 `EV_REL REL_WHEEL`（表冠旋转，±1）均已被 App 监听路径覆盖（r2 §1：旋转走相对轴非按键，接表冠需读输入设备，工程量大于按键）。
 
-- **通过**：整理 results/ → 脱敏 → 写 `devices/oppo-watch-4-pro/docs/reports/probe-report-rN.md` → git commit → **git push**（§8 纪律）
+- **通过**：整理 results/ → 脱敏 → 写 `packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-rN.md` → git commit → **git push**（§8 纪律）
+
 - **不通过**：原始结果交回 Agent 分析 → 定位（权限/HAL/频率）→ 修正代码或调整方案 → 重新构建 → 再约真机会话
 
 ## 8. Git 纪律
 
 - 分支：单线开发，当前为 `master`（2026-11-19 仓库重建后从 main 切换，勿再建新分支）；小步提交；commit message 英文祈使句（沿用现有风格），正文可中文。
+
 - **推送纪律：对应功能真机测试通过后才 push**；push 前跑敏感扫描：
+
   ```powershell
+
   git grep -n -i -E 'CA6C[0-9A-F]{4}|github_pat_|ghp_|E:\\资料' -- .
+
   ```
+
 - 不提交：`results/` 原始输出、`build/`、`*.keystore`、`platform-tools`/`cmdline-tools`/`android-sdk`、任何 token/密钥（.gitignore 已列）。
+
 - 报告入库前脱敏：序列号写 `CA6C****` 形式。
+
 - push 认证：凭据不写入仓库与 remote URL；用会话内临时凭据或用户侧凭证管理器。
 
 ## 9. 安全与合规底线
 
 - 健康数据内容必须带「非医疗器械、不用于诊断、异常请就医」声明。
+
 - 数据不上云；PC 桥接仅局域网。
+
 - 本仓库不与 OPPO 存在隶属关系；引用官方条款以最新页面为准。
+
 - 不提供 root/刷机/改分区方法。
 
 ## 10. PowerShell 5.1 工程坑位表（本仓库实测踩过，必须遵守）
 
 1. **.ps1 中文脚本必须带 BOM 的 UTF-8**：PS 5.1 把无 BOM 的 UTF-8 当 ANSI/GBK 解析，含中文的脚本会直接解析报错（字符串被切碎→MissingArrayIndexExpression 等假语法错）；`Get-Content`→改→`Set-Content` 的往返也可能毁文件（编码错配）。仓库规范：**所有 .ps1 保存为带 BOM 的 UTF-8，提示信息用中文**；每次改动后跑 §4 的 BOM+解析双校验。
+
 2. **数组 splatting 传原生 exe 会坏参数**：`@args` 展开传给 javac/d8 会被切碎；只能用**字面量字符串参数**逐个传，多文件用 foreach 或先 `jar` 打包成单输入。
+
 3. **d8.bat / apksigner.bat 经 JAVA_HOME 找 java**：构建前把 `$env:JAVA_HOME` 指到 JDK 11+（系统 JAVA_HOME 若指向 JDK8 会报 class version 55 错）。
+
 4. **`$ErrorActionPreference='Stop'` + 原生命令 stderr**：javac 的警告会变成终止错误；构建脚本里用 `Continue` + 显式 `$LASTEXITCODE` 检查。
+
 5. **中文报错读法**：原生工具 stderr 是 GBK；重定向到文件后用 `[System.Text.Encoding]::GetEncoding(936)` 解码。
+
 6. adb 输出统一为 UTF-8：脚本开头 `[Console]::OutputEncoding = UTF8`。
 
 ## 11. OPPO 硬件事实与历史协议决策
 
-- 私有 sensor type 号：血氧 69633 / 成品 ECG 69636 / ECG 原始波 69812 / 腕温 69815 / 心率私有 69632 / 标准心率 21 / 12 路 PPG_RAW 69801~69814；免权限项见 [教程②速查表](devices/oppo-watch-4-pro/docs/tutorials/02-sensor-probe.md)。
-- 最新通信契约以 [contracts/protocol.md](contracts/protocol.md) 为准，以下选型是 OPPO 历史方案，尚非运行时能力。
+- 私有 sensor type 号：血氧 69633 / 成品 ECG 69636 / ECG 原始波 69812 / 腕温 69815 / 心率私有 69632 / 标准心率 21 / 12 路 PPG_RAW 69801~69814；免权限项见 [教程②速查表](packages/device-access/oppo-watch-4-pro/docs/tutorials/02-sensor-probe.md)。
+
+- 最新通信契约以 [contracts/protocol.md](packages/contracts/protocol.md) 为准，以下选型是 OPPO 历史方案，尚非运行时能力。
+
 - 事件模型六态：`idle|thinking|running|waiting|done|error`（JSON、<4KB/帧）——**协议扩展位**，Agent 状态不再下发手表，供后期 PC 端接入 Agent 来源用。
+
 - 适配器优先级（后期扩展参考）：Claude Code（HTTP hooks）> Qoder > Codex > WorkBuddy（tail 日志）> 豆包（粗粒度兜底）。
+
 - 产品叙事：宠物是「一键唤起的 App / 充电底座桌宠」，不是表盘。
+
 - **停靠即致盲（2026-11-19 实测发现）**：表吸底座时背面（PPG/ECG 电极/腕温）贴着充电器——「底座桌宠」模式下健康测量物理不可行，夜间心率/睡眠数据拿不到（宠物状态显示不受影响，它不走传感器）。健康数据看板是「白天佩戴」功能，不是「夜间桌宠」功能。
+
 - **通信选型（2026-11-19 决策）**：主场景是白天佩戴——**BLE GATT 优先（P9 待验证）+ Wi-Fi 局域网备选**，上层统一健康帧协议（JSON、<4KB/帧、可插拔 transport）。调研与决策详见 [transport-selection.md](docs/research/transport-selection.md)。
+
 - **表冠输入路径（r2 实测）**：旋转走 `EV_REL REL_WHEEL` 相对轴（非按键，接它需读输入设备，工程量大于按键）；侧边功能键走 `KEY_F1`。
+
 - **亮屏门控（2026-11-19 r2 实测）**：灭屏时 HAL 对第三方全部零回调（非拦截），亮屏即恢复——实测 246.7 Hz PPG / 52.7 Hz ECG / 98.5 Hz 腕温；采健康数据必须亮屏。灭屏也会杀后台 App 进程（前台服务是常驻唯一路径）。
+
 - **离腕门控混淆**：LLOB/PPG_WEAR 检测未佩戴时 HAL 可能暂停 PPG 类传感器——停靠位零回调 ≠ HAL 拦截第三方，需 Wi-Fi 手持位复测区分。
 
 ## 12. 计划指针（M0 · PoC 清单状态）
 
 | # | 验证项 | 状态 | 载体 |
 |---|---|---|---|
-| P1 | 按键事件能否被 App 截获 | ✅ **完成**（r2：功能键=KEY_F1，表冠旋转=REL_WHEEL 相对轴 ±1） | [报告 r2 §1](devices/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
-| P0+ | 私有 sensor 出数与频率 | ✅ **完成**（r2：12路 PPG_RAW 246.7Hz + ECG_RAW 52.7Hz + 腕温 98.5Hz 全部免权限直读；血氧/心率/ECG 成品停靠位零回调待手持复测；亮屏门控已实证） | [报告 r2 §2-3](devices/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
+| P1 | 按键事件能否被 App 截获 | ✅ **完成**（r2：功能键=KEY_F1，表冠旋转=REL_WHEEL 相对轴 ±1） | [报告 r2 §1](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
+| P0+ | 私有 sensor 出数与频率 | ✅ **完成**（r2：12路 PPG_RAW 246.7Hz + ECG_RAW 52.7Hz + 腕温 98.5Hz 全部免权限直读；血氧/心率/ECG 成品停靠位零回调待手持复测；亮屏门控已实证） | [报告 r2 §2-3](packages/device-access/oppo-watch-4-pro/docs/reports/probe-report-r2.md) |
 | P2 | 前台服务保活（8h 断流 ≤1 次） | 🔄 **紧迫性提升**：r2 实证灭屏即杀 App 进程，需前台服务才能常驻 | 采集 App 骨架 |
 | P3 | 常亮/抬腕功耗 | ⏸ | — |
 | P4 | Wi-Fi 长连稳定性（24h 断连 <3 次） | ⏸ 需 PC 桥接 | — |

@@ -8,8 +8,8 @@
 
 你手里是其他 OPPO / 一加手表（Watch X / X2 / X3、Watch 3、一加手表 2、Watch SE……）？跑一遍探针把报告发来：
 
-1. 照 [devices/oppo-watch-4-pro/docs/tutorials/01-getting-started.md](devices/oppo-watch-4-pro/docs/tutorials/01-getting-started.md) 连上手表
-2. 运行 `devices/oppo-watch-4-pro/tools/verify-watch.ps1`（Windows 双击 `run-verify.bat` 即可）
+1. 照 [packages/device-access/oppo-watch-4-pro/docs/tutorials/01-getting-started.md](packages/device-access/oppo-watch-4-pro/docs/tutorials/01-getting-started.md) 连上手表
+2. 运行 `packages/device-access/oppo-watch-4-pro/tools/verify-watch.ps1`（Windows 双击 `run-verify.bat` 即可）
 3. 把生成的 `watch-report-<时间戳>.md` 附在 issue 里
 
 贡献前请把报告里的**序列号脱敏**（换成 `XXXX****`）。
@@ -33,7 +33,7 @@
 
 现有脚本为 PowerShell 5.1 兼容语法，保持 UTF-8 BOM。基线探针保持只读；安装被测 App、传感器授权、Wi-Fi adb 等测试动作须明确说明，由用户执行，不得修改系统分区。
 
-新增机型在 `devices/<机型>/` 提交适配、元数据、测试和配套资料；公共核心不得引入厂商 API。通信、PC 系统和 Agent 来源适配分别遵守 connectivity、platforms、integrations 的边界，见[总体架构](docs/research/architecture.md)。
+新增机型在 `packages/device-access/<机型>/` 提交适配、元数据、测试和配套资料；公共核心不得引入厂商 API。通信、PC 系统和 Agent 来源适配分别遵守 packages/runtime/connectivity、apps/desktop/platforms、packages/runtime/integrations 的边界，见[总体架构](docs/research/architecture.md)。
 
 ## 行为边界
 

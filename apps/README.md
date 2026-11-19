@@ -1,3 +1,6 @@
-# 应用入口
+# 应用宿主
 
-[desktop](desktop/README.md) 已实现 Electron 宿主与无窗口桥接入口；[watch](watch/README.md) 正式手表 App 仍待实现。应用负责装配，厂商私有采集保留在 devices 中。
+- [desktop](desktop/README.md)：Electron PC 展示层，装配运行层与设备插件。
+- [bridge](bridge/README.md)：无窗口 Node.js 宿主，可独立运行采集链路。
+
+硬件采集工程与配套资料统一放在 [device-access](../packages/device-access/README.md)。应用之间不互相导入源码。
