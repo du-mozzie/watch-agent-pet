@@ -123,16 +123,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\device-test.ps1
 
 ## 7. 结果判读与处理回路
 
-判读依据 [docs/tutorials/03-minimal-sensor-apk.md](docs/tutorials/03-minimal-sensor-apk.md) 的结果判读表：
+判读依据 [docs/tutorials/03-minimal-sensor-apk.md](docs/tutorials/03-minimal-sensor-apk.md) 与 [报告 r2 §3](docs/device-probe/probe-report-r2.md)：
 
 | logcat 现象 | 结论 | 动作 |
 |---|---|---|
 | `首发` + values 变化 + STATS `活跃` | ✅ 可用 | 直接进开发，结论写入 probe-report-rN |
-| 有回调但 values 恒 0 | ⚠️ HAL 空转 | 该项回退官方 SDK 路线 |
+| 全部零回调，但**灭屏/息屏状态** | ⚠️ **亮屏门控（不是 HAL 拦截）** | 先 `input keyevent KEYCODE_WAKEUP` 再重测（r2 实测：亮屏即恢复 246Hz 数据流） |
+| 有回调但 values 恒 0（亮屏下） | ⚠️ HAL 空转 | 该项回退官方 SDK 路线 |
 | STATS 显示 Hz 远低于 dumpsys 声明 | ⚠️ 厂商限频 | 按实际 Hz 设计采样 |
-| 无任何回调 | ❌ 被拦截 | 查 sensor_privacy / 权限，仍不行回退 SDK |
+| 亮屏+接触皮肤下仍零回调 | ❌ 被拦截 | 查 sensor_privacy / 权限，仍不行回退 SDK |
 
-getevent 判读：`KEY_F1`/`KEY_F2` 出现＝表冠旋转可被 App 接住（P1 通过）；只有 `EV_REL`＝旋转走相对轴，需改用轴事件监听。
+**亮屏门控三步法**（r2 实证）：① 灭屏时零回调 ≠ 拦截，先亮屏；② 亮屏后 App 被杀则冷启动重装重测；③ 成品类传感器（血氧/心率/ECG 成品）停靠位零回调需 Wi-Fi 手持位+皮肤接触复测才能定论。
+
+getevent 判读：`KEY_F1`（侧边功能键）与 `EV_REL REL_WHEEL`（表冠旋转，±1）均已被 App 监听路径覆盖（r2 §1：旋转走相对轴非按键，接表冠需读输入设备，工程量大于按键）。
 
 - **通过**：整理 results/ → 脱敏 → 写 `docs/device-probe/probe-report-rN.md` → git commit → **git push**（§8 纪律）
 - **不通过**：原始结果交回 Agent 分析 → 定位（权限/HAL/频率）→ 修正代码或调整方案 → 重新构建 → 再约真机会话
@@ -171,15 +174,17 @@ getevent 判读：`KEY_F1`/`KEY_F2` 出现＝表冠旋转可被 App 接住（P1 
 - 适配器优先级：Claude Code（HTTP hooks）> Qoder > Codex > WorkBuddy（tail 日志）> 豆包（粗粒度兜底）。
 - 产品叙事：宠物是「一键唤起的 App / 充电底座桌宠」，不是表盘。
 - **停靠即致盲（2026-11-19 实测发现）**：表吸底座时背面（PPG/ECG 电极/腕温）贴着充电器——「底座桌宠」模式下健康测量物理不可行，夜间心率/睡眠数据拿不到（宠物状态显示不受影响，它不走传感器）。健康数据看板是「白天佩戴」功能，不是「夜间桌宠」功能。
+- **表冠输入路径（r2 实测）**：旋转走 `EV_REL REL_WHEEL` 相对轴（非按键，接它需读输入设备，工程量大于按键）；侧边功能键走 `KEY_F1`。
+- **亮屏门控（2026-11-19 r2 实测）**：灭屏时 HAL 对第三方全部零回调（非拦截），亮屏即恢复——实测 246.7 Hz PPG / 52.7 Hz ECG / 98.5 Hz 腕温；采健康数据必须亮屏。灭屏也会杀后台 App 进程（前台服务是常驻唯一路径）。
 - **离腕门控混淆**：LLOB/PPG_WEAR 检测未佩戴时 HAL 可能暂停 PPG 类传感器——停靠位零回调 ≠ HAL 拦截第三方，需 Wi-Fi 手持位复测区分。
 
 ## 12. 计划指针（M0 · PoC 清单状态）
 
 | # | 验证项 | 状态 | 载体 |
 |---|---|---|---|
-| P1 | 按键事件能否被 App 截获（表冠是否 F1/F2） | 🔄 脚本就绪，待真机 | device-test.ps1 §2 |
-| P0+ | 私有 sensor 出数与频率（**注册≠出数**） | 🔄 APK 已构建，待真机 | device-test.ps1 §3-6 |
-| P2 | 前台服务保活（8h 断流 ≤1 次） | ⏸ 需宠物 App 骨架 | — |
+| P1 | 按键事件能否被 App 截获 | ✅ **完成**（r2：功能键=KEY_F1，表冠旋转=REL_WHEEL 相对轴 ±1） | [报告 r2 §1](docs/device-probe/probe-report-r2.md) |
+| P0+ | 私有 sensor 出数与频率 | ✅ **完成**（r2：12路 PPG_RAW 246.7Hz + ECG_RAW 52.7Hz + 腕温 98.5Hz 全部免权限直读；血氧/心率/ECG 成品停靠位零回调待手持复测；亮屏门控已实证） | [报告 r2 §2-3](docs/device-probe/probe-report-r2.md) |
+| P2 | 前台服务保活（8h 断流 ≤1 次） | 🔄 **紧迫性提升**：r2 实证灭屏即杀 App 进程，需前台服务才能常驻 | 宠物 App 骨架 |
 | P3 | 常亮/抬腕功耗 | ⏸ | — |
 | P4 | Wi-Fi 长连稳定性（24h 断连 <3 次） | ⏸ 需 PC 桥接 | — |
 | P5 | 麦克风录音 | ⏸ | — |
@@ -187,7 +192,7 @@ getevent 判读：`KEY_F1`/`KEY_F2` 出现＝表冠旋转可被 App 接住（P1 
 | P7 | 32 位 runtime（wasm3/QuickJS） | ⏸ 组件中心阶段 | — |
 | P8 | 官方「自定义按键」指向 App | ⏸ 真机会话可顺带人工验证 | — |
 
-**真机验证通过后的开发顺序**（M0 → M1）：① PC 桥接原型（事件模型 + Claude Code HTTP hook 适配器 + WebSocket 服务，假数据先跑）→ ② 手表宠物 App 骨架（Gradle 工程、五态动画、Wi-Fi 长连）→ ③ P2/P3/P4 稳定性实测。
+**真机验证通过后的开发顺序**（M0 → M1）：① PC 桥接原型（事件模型 + Claude Code HTTP hook 适配器 + WebSocket 服务，假数据先跑）→ ② 手表宠物 App 骨架（Gradle 工程、五态动画、前台服务、Wi-Fi 长连）→ ③ P2/P3/P4 稳定性实测。
 
 ---
 

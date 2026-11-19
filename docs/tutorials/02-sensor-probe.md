@@ -72,22 +72,23 @@ adb shell dumpsys sensorservice
 adb shell cat /system/usr/keylayout/qpnp_pon.kl
 ```
 
-实测发现 59/60 两个 Linux keycode 被映射为 **F1 / F2** —— 推测对应**表冠旋转的两个方向**。这意味着 App 里监听 `KEYCODE_F1/F2` 就可能拿到旋转事件。但 keylayout 只是定义，还需 `getevent -l` 实测确认转表冠时真的发出这两个键：
+实测（2026-11-19，[报告 r2 §1](../device-probe/probe-report-r2.md)）推翻了 keylayout 推测：**表冠旋转不走 F1/F2 按键，而是 `EV_REL REL_WHEEL` 相对轴事件**（pixart_pat9125 芯片，event2 节点，两方向分别为 -1/+1）；F1 是侧边功能键（qpnp_pon，event0）。验证方法：
 
 ```bash
-adb shell getevent -l    # 然后转动表冠、按功能键，观察输出
+adb shell getevent -l    # 转表冠看 REL_WHEEL，按功能键看 KEY_F1
 ```
 
-> 该项是设计调研里的 PoC **P1**，实测通过则「表冠调电脑音量 / 切歌 / 翻页」成立。
+**对产品的影响**：Android 标准 API 无 REL_WHEEL 入口，App 想接表冠旋转需读输入设备（InputDevice 扫描或 native 读 /dev/input，后者需权限）——「表冠当物理旋钮」玩法可行但工程量比按键大。
 
-## ⚠️ 最重要的警告：注册 ≠ 出数
+## ⚠️ 最重要的警告：注册 ≠ 出数（已实测：亮屏门控）
 
-`dumpsys` 里有条目，只说明传感器向**系统**注册了，不代表 HAL 会把数据交给**非系统应用**：
+`dumpsys` 里有条目，只说明传感器向**系统**注册了，不代表 HAL 会把数据交给**非系统应用**。第二轮实测（[报告 r2 §3](../device-probe/probe-report-r2.md)）给出了真实边界：
 
-- 有些厂商在 HAL 层对第三方返回空值或恒 0
-- 有些限制实际频率（声明 500Hz，实际可能只给 1Hz）
-- 免权限（`perm: n/a`）不等于不被 `sensor_privacy` 拦截
+- **灭屏时对所有第三方零回调**（ColorOS Watch 省电门控，传感器链路休眠）——这不是 HAL 拦截，亮屏即恢复
+- **亮屏后实测出数**：12 路 PPG_RAW ≈246.7 Hz、ECG_RAW ≈52.7 Hz、腕温 ≈98.5 Hz（全部免权限）
+- 带 BODY_SENSORS 的成品传感器（血氧/心率/ECG 成品）停靠位始终零回调——需亮屏+接触皮肤下复测区分「未测出新值」与「不喂第三方」
+- 12 路 PPG_RAW 中 G1 通道值全零，疑似备用/损坏通道
 
-**唯一可靠的验证方法**是装一个最小 APK 真实注册监听这些 type，数回调次数、看数值变化 —— 这正是[教程 3：最小验证 APK](03-minimal-sensor-apk.md) 的内容。
+**唯一可靠的验证方法**是装一个最小 APK 真实注册监听这些 type，数回调次数、看数值变化 —— 这正是[教程 3：最小验证 APK](03-minimal-sensor-apk.md) 的内容（现成的：`android/sensor-probe/`，`build.ps1` 一键构建）。
 
 > AI生成

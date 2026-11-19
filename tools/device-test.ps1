@@ -71,7 +71,8 @@ Write-Output "    c) 短按一次表冠"
 Write-Output "    d) 抬腕/放腕一次"
 Read-Host  "  在这里按回车键开始采集"
 Write-Output "  >>> 开始！请持续操作，直到提示完成"
-$ev = Invoke-Adb shell "timeout $GeteventSeconds getevent -l"
+$ev = & $AdbPath shell "timeout $GeteventSeconds getevent -l" 2>&1
+$ev = (($ev | Out-String) -replace "`r", "")
 $evFile = Join-Path $outDir "getevent.txt"
 $ev | Out-File -LiteralPath $evFile -Encoding utf8
 $evLines = @($ev -split "`n")
@@ -82,7 +83,7 @@ Write-Output ("  采集完成：{0} 行（其中 KEY_ 事件 {1} 行、EV_REL �
 if ($keyNames.Count -gt 0) { Write-Output ("  捕获到的按键: {0}" -f ($keyNames -join ", ")) }
 if ($relLines.Count -gt 0) { Write-Output "  注意：出现 EV_REL 行 → 表冠旋转可能走相对轴上报，不是按键" }
 
-# ---------- 3 安装探针 APK ----------
+# ---------- 3 安装探针 APK（install 必须用字面量参数直接调用，见 AGENT.md §10 坑 2）----------
 Section "3. 安装传感器探针 APK"
 $apk = Join-Path $repo "android\sensor-probe\build\sensor-probe-debug.apk"
 if (-not (Test-Path $apk)) {
@@ -90,12 +91,25 @@ if (-not (Test-Path $apk)) {
     Write-Output "    请先构建：powershell -File android\sensor-probe\build.ps1"
     exit 1
 }
-$inst = Invoke-Adb install -r $apk
+$inst = & $AdbPath install -r $apk 2>&1
+$inst = (($inst | Out-String) -replace "`r", "").Trim()
 Write-Output "  $inst"
+if ($LASTEXITCODE -ne 0 -or $inst -notmatch "Success") {
+    Write-Output "[X] 安装失败（exit=$LASTEXITCODE）。请把上面的报错交给 Agent 分析。"
+    exit 1
+}
+# 安装后确认包确实在
+$pkgCheck = (& $AdbPath shell pm list packages $pkg 2>&1 | Out-String)
+if ($pkgCheck -notmatch "package:$pkg") {
+    Write-Output "[X] 包 $pkg 安装后未出现在包列表，安装异常。"
+    exit 1
+}
+Write-Output "  [OK] 已安装: $pkg"
 
-# ---------- 4 授权 BODY_SENSORS ----------
+# ---------- 4 授权 BODY_SENSORS（字面量参数直接调用）----------
 Section "4. 授予 BODY_SENSORS 权限"
-$g = Invoke-Adb shell pm grant $pkg android.permission.BODY_SENSORS
+$g = & $AdbPath shell pm grant $pkg android.permission.BODY_SENSORS 2>&1
+$g = (($g | Out-String) -replace "`r", "").Trim()
 if ([string]::IsNullOrWhiteSpace($g)) {
     Write-Output "  [OK] 已通过 pm grant 授权"
 } else {
@@ -103,11 +117,15 @@ if ([string]::IsNullOrWhiteSpace($g)) {
     Write-Output "      备选：让 App 在表上弹授权窗时手动点允许（然后重跑本脚本）"
 }
 
-# ---------- 5 拉起 App + 采集 logcat ----------
+# ---------- 5 拉起 App + 采集 logcat（字面量参数直接调用）----------
 Section "5. 拉起探针 App 并采集 logcat（$LogcatSeconds 秒）"
-Invoke-Adb logcat -c | Out-Null
-$st = Invoke-Adb shell am start -n "$pkg/.MainActivity"
+& $AdbPath logcat -c 2>&1 | Out-Null
+$st = & $AdbPath shell am start -n "$pkg/.MainActivity" 2>&1
+$st = (($st | Out-String) -replace "`r", "").Trim()
 Write-Output "  $st"
+Start-Sleep -Seconds 2
+$pid = (& $AdbPath shell pidof $pkg 2>&1 | Out-String).Trim()
+if ($pid) { Write-Output "  [OK] App 进程在线: pid $pid" } else { Write-Output "  [!] App 进程未找到（可能被杀，检查表上是否有异常）" }
 Write-Output "  >>> 采集期间请保持 App 在前台"
 $serial = Invoke-Adb devices
 if ($serial -match "\d+\.\d+\.\d+\.\d+:5555") {
@@ -118,7 +136,8 @@ if ($serial -match "\d+\.\d+\.\d+\.\d+:5555") {
     Write-Output "      本次回答的是「HAL 是否向第三方 App 喂回调」（数回调次数）。"
     Write-Output "      之后想拿真实数值：先跑 adb-wifi.ps1，拔线离座，手持/佩戴再测。"
 }
-$lc = Invoke-Adb shell "timeout $LogcatSeconds logcat -s PROBE STATS -v time"
+$lc = & $AdbPath shell "timeout $LogcatSeconds logcat -s PROBE STATS -v time" 2>&1
+$lc = (($lc | Out-String) -replace "`r", "")
 $lcFile = Join-Path $outDir "logcat-probe.txt"
 $lc | Out-File -LiteralPath $lcFile -Encoding utf8
 $lcLines = @($lc -split "`n" | Where-Object { $_.Trim() })
@@ -128,7 +147,8 @@ Write-Output ("  采集完成：PROBE 行 {0} 条、STATS 行 {1} 条 → {2}" -
 
 # ---------- 6 传感器服务注册行 ----------
 Section "6. 传感器服务注册情况（我们的包名）"
-$dump = Invoke-Adb shell dumpsys sensorservice
+$dump = & $AdbPath shell dumpsys sensorservice 2>&1
+$dump = (($dump | Out-String) -replace "`r", "")
 $dumpFile = Join-Path $outDir "sensorservice-dump.txt"
 $dump | Out-File -LiteralPath $dumpFile -Encoding utf8
 $ours = @(($dump -split "`n") | Where-Object { $_ -match "owapet" })
