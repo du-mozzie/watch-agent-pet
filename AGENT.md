@@ -174,6 +174,7 @@ getevent 判读：`KEY_F1`（侧边功能键）与 `EV_REL REL_WHEEL`（表冠�
 - 适配器优先级：Claude Code（HTTP hooks）> Qoder > Codex > WorkBuddy（tail 日志）> 豆包（粗粒度兜底）。
 - 产品叙事：宠物是「一键唤起的 App / 充电底座桌宠」，不是表盘。
 - **停靠即致盲（2026-11-19 实测发现）**：表吸底座时背面（PPG/ECG 电极/腕温）贴着充电器——「底座桌宠」模式下健康测量物理不可行，夜间心率/睡眠数据拿不到（宠物状态显示不受影响，它不走传感器）。健康数据看板是「白天佩戴」功能，不是「夜间桌宠」功能。
+- **通信选型（2026-11-19 决策）**：主场景是白天佩戴——**BLE GATT 优先（P9 待验证）+ Wi-Fi 局域网备选**，上层统一六态事件模型（JSON、<4KB/帧、可插拔 transport）。调研与决策详见 [transport-selection.md](docs/research/transport-selection.md)。
 - **表冠输入路径（r2 实测）**：旋转走 `EV_REL REL_WHEEL` 相对轴（非按键，接它需读输入设备，工程量大于按键）；侧边功能键走 `KEY_F1`。
 - **亮屏门控（2026-11-19 r2 实测）**：灭屏时 HAL 对第三方全部零回调（非拦截），亮屏即恢复——实测 246.7 Hz PPG / 52.7 Hz ECG / 98.5 Hz 腕温；采健康数据必须亮屏。灭屏也会杀后台 App 进程（前台服务是常驻唯一路径）。
 - **离腕门控混淆**：LLOB/PPG_WEAR 检测未佩戴时 HAL 可能暂停 PPG 类传感器——停靠位零回调 ≠ HAL 拦截第三方，需 Wi-Fi 手持位复测区分。
@@ -191,6 +192,7 @@ getevent 判读：`KEY_F1`（侧边功能键）与 `EV_REL REL_WHEEL`（表冠�
 | P6 | 音频播放与音量 | ⏸ | — |
 | P7 | 32 位 runtime（wasm3/QuickJS） | ⏸ 组件中心阶段 | — |
 | P8 | 官方「自定义按键」指向 App | ⏸ 真机会话可顺带人工验证 | — |
+| P9 | **BLE GATT server 可行性**（ColorOS Watch 第三方 App）| 🔄 新增，决定主通道 | [transport-selection.md §4](docs/research/transport-selection.md) |
 
 **真机验证通过后的开发顺序**（M0 → M1）：① PC 桥接原型（事件模型 + Claude Code HTTP hook 适配器 + WebSocket 服务，假数据先跑）→ ② 手表宠物 App 骨架（Gradle 工程、五态动画、前台服务、Wi-Fi 长连）→ ③ P2/P3/P4 稳定性实测。
 

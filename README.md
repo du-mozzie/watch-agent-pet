@@ -57,7 +57,7 @@
 
 | 目录 | 内容 |
 |---|---|
-| [docs/research/](docs/research/) | [设计调研](docs/research/design-research.md)：六项能力逐条落地判定、五 Agent 接入矩阵、总体架构、PoC 清单 P1~P8 |
+| [docs/research/](docs/research/) | [设计调研](docs/research/design-research.md)：六项能力逐条落地判定、五 Agent 接入矩阵、总体架构、PoC 清单 P1~P8 ＋ [通信通道选型](docs/research/transport-selection.md)（BLE 优先 + Wi-Fi 备选，2026-11-19） |
 | [docs/official-docs/](docs/official-docs/) | [OPPO 开放平台资料汇编](docs/official-docs/oppo-wear-dev-notes.md)：机型表、Wear Engine / 健康服务 SDK 字段、审核红线 vs 系统硬边界 |
 | [docs/device-probe/](docs/device-probe/) | [真机实测报告](docs/device-probe/probe-report-r1.md) + [传感器 dump 原文](docs/device-probe/sensorservice-dump.txt) |
 | [docs/tutorials/](docs/tutorials/) | 教程：[①上手连接](docs/tutorials/01-getting-started.md) · [②传感器探针判读](docs/tutorials/02-sensor-probe.md) · [③最小验证 APK](docs/tutorials/03-minimal-sensor-apk.md) |
