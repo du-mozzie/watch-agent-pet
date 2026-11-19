@@ -81,9 +81,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
 & <build-tools>\aapt2.exe dump badging build\sensor-probe-debug.apk   # package/sdkVersion/uses-feature 正确性
 # apksigner verify 已在 build.ps1 内置；检查 minSdk=27/target=30/watch feature
 
-# 脚本编码防回归（§10 坑 1）：所有 .ps1 必须纯 ASCII，改完必跑 PS 5.1 解析校验，两个数都应为 0
+# 脚本编码防回归（§10 坑 1）：所有 .ps1 必须带 BOM 的 UTF-8，改完必跑两项校验：
+#   ① PS 5.1 解析 0 错误；② 前 3 字节为 UTF-8 BOM（EF BB BF）
 $e=$null; [System.Management.Automation.Language.Parser]::ParseFile('<脚本路径>',[ref]$null,[ref]$e); $e.Count
-([System.IO.File]::ReadAllBytes('<脚本路径>') | Where-Object { $_ -gt 127 }).Count
+([System.IO.File]::ReadAllBytes('<脚本路径>')[0..2] | ForEach-Object { $_.ToString('X2') }) -join ' '   # 应为 EF BB BF
 ```
 
 ## 5. 测试分层
@@ -156,7 +157,7 @@ getevent 判读：`KEY_F1`/`KEY_F2` 出现＝表冠旋转可被 App 接住（P1 
 
 ## 10. PowerShell 5.1 工程坑位表（本仓库实测踩过，必须遵守）
 
-1. **脚本文件纯 ASCII**：PS 5.1 把无 BOM 的 UTF-8 当 ANSI/GBK 解析；`Get-Content`→改→`Set-Content` 的中文往返会毁文件（注释行被吞、行号漂移）。中文说明写在 .md 里，.ps1 一律 ASCII。
+1. **.ps1 中文脚本必须带 BOM 的 UTF-8**：PS 5.1 把无 BOM 的 UTF-8 当 ANSI/GBK 解析，含中文的脚本会直接解析报错（字符串被切碎→MissingArrayIndexExpression 等假语法错）；`Get-Content`→改→`Set-Content` 的往返也可能毁文件（编码错配）。仓库规范：**所有 .ps1 保存为带 BOM 的 UTF-8，提示信息用中文**；每次改动后跑 §4 的 BOM+解析双校验。
 2. **数组 splatting 传原生 exe 会坏参数**：`@args` 展开传给 javac/d8 会被切碎；只能用**字面量字符串参数**逐个传，多文件用 foreach 或先 `jar` 打包成单输入。
 3. **d8.bat / apksigner.bat 经 JAVA_HOME 找 java**：构建前把 `$env:JAVA_HOME` 指到 JDK 11+（系统 JAVA_HOME 若指向 JDK8 会报 class version 55 错）。
 4. **`$ErrorActionPreference='Stop'` + 原生命令 stderr**：javac 的警告会变成终止错误；构建脚本里用 `Continue` + 显式 `$LASTEXITCODE` 检查。

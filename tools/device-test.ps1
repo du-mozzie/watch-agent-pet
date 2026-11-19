@@ -1,12 +1,12 @@
-<#
-  oppo-watch-agent-pet / on-device test session script
-  Covers: P1 physical keys (getevent) + private sensor data validation (Sensor Probe APK)
-  Usage:  powershell -NoProfile -ExecutionPolicy Bypass -File device-test.ps1
-  Before: watch on dock + USB debugging on + authorized (docs/tutorials/01-getting-started.md)
-          APK built by android\sensor-probe\build.ps1
-  Output: results\device-test-<timestamp>\ (getevent log + logcat + sensor registrations + summary)
-  Device actions: install probe app + log capture only; otherwise read-only.
-  ASCII-only on purpose (PS 5.1 encoding safety); console re-encoded to UTF-8 for adb output.
+﻿<#
+  oppo-watch-agent-pet / 真机测试会话脚本（中文提示版）
+  覆盖：P1 物理按键（getevent）+ 私有传感器出数验证（Sensor Probe APK）
+  用法：powershell -NoProfile -ExecutionPolicy Bypass -File device-test.ps1
+  前置：手表放底座 + USB 调试已授权（docs/tutorials/01-getting-started.md）；
+        APK 已由 android\sensor-probe\build.ps1 构建
+  产出：results\device-test-<时间戳>\（getevent 日志 + logcat + 传感器注册行 + 汇总）
+  设备动作：仅安装被测 App + 采集日志，其余只读。
+  编码：本脚本为带 BOM 的 UTF-8（含中文提示）；PS 5.1 下必须保留 BOM，见 AGENT.md §10 坑 1。
 #>
 param(
     [string]$AdbPath = "",
@@ -27,7 +27,7 @@ function Invoke-Adb {
     return (($o | Out-String) -replace "`r", "").Trim()
 }
 
-# ---------- 0 locate adb ----------
+# ---------- 0 定位 adb ----------
 if (-not $AdbPath) {
     $cands = @(
         (Join-Path $ScriptDir "platform-tools\adb.exe"),
@@ -37,13 +37,13 @@ if (-not $AdbPath) {
 }
 if (-not $AdbPath) { $cmd = Get-Command adb -ErrorAction SilentlyContinue; if ($cmd) { $AdbPath = $cmd.Source } }
 if (-not $AdbPath -or -not (Test-Path -LiteralPath $AdbPath)) {
-    Write-Output "[X] adb.exe not found. Unzip platform-tools into tools\platform-tools or pass -AdbPath."
+    Write-Output "[X] 找不到 adb.exe。请把 platform-tools 解压到 tools\platform-tools，或用 -AdbPath 指定路径。"
     exit 1
 }
 Write-Output "[i] adb: $AdbPath"
 
-# ---------- 1 wait for device ----------
-Section "1. Waiting for device (max 30s)"
+# ---------- 1 等待设备 ----------
+Section "1. 等待设备接入（最多 30 秒）"
 $deadline = (Get-Date).AddSeconds(30)
 $devLine = ""
 while ((Get-Date) -lt $deadline) {
@@ -52,7 +52,7 @@ while ((Get-Date) -lt $deadline) {
     Start-Sleep -Seconds 2
 }
 if (-not $devLine) {
-    Write-Output "[X] no device in 30s. Check: dock->PC usb, debugging on, tap 'always allow' on watch."
+    Write-Output "[X] 30 秒内没有设备。请检查：手表在底座、底座 USB 连电脑、USB 调试已开、表上已点「一律允许」。"
     exit 1
 }
 Write-Output "[OK] $devLine"
@@ -60,17 +60,17 @@ Write-Output "[OK] $devLine"
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $outDir = Join-Path $repo "results\device-test-$stamp"
 New-Item -ItemType Directory -Path $outDir -Force | Out-Null
-Write-Output "[i] results dir: $outDir"
+Write-Output "[i] 结果目录: $outDir"
 
-# ---------- 2 P1: physical key capture ----------
-Section "2. P1 physical keys (getevent, $GeteventSeconds s)"
-Write-Output "  When the timer starts, do each of these on the watch:"
-Write-Output "    a) rotate the crown 5-10 detents both ways"
-Write-Output "    b) short-press the side function key once"
-Write-Output "    c) short-press the crown once"
-Write-Output "    d) raise/lower the wrist once"
-Read-Host  "  Press ENTER here to start the capture"
-Write-Output "  >>> GO (keep going until it says done)"
+# ---------- 2 P1：物理按键采集 ----------
+Section "2. P1 物理按键采集（getevent，$GeteventSeconds 秒）"
+Write-Output "  计时开始后，请在手表上依次完成以下动作："
+Write-Output "    a) 旋转表冠 5~10 格（两个方向都转）"
+Write-Output "    b) 短按一次侧边功能键"
+Write-Output "    c) 短按一次表冠"
+Write-Output "    d) 抬腕/放腕一次"
+Read-Host  "  在这里按回车键开始采集"
+Write-Output "  >>> 开始！请持续操作，直到提示完成"
 $ev = Invoke-Adb shell "timeout $GeteventSeconds getevent -l"
 $evFile = Join-Path $outDir "getevent.txt"
 $ev | Out-File -LiteralPath $evFile -Encoding utf8
@@ -78,45 +78,45 @@ $evLines = @($ev -split "`n")
 $keyLines = @($evLines | Where-Object { $_ -match "KEY_" })
 $relLines = @($evLines | Where-Object { $_ -match "EV_REL" })
 $keyNames = @($keyLines | ForEach-Object { if ($_ -match "(KEY_[A-Z0-9_]+)") { $Matches[1] } } | Sort-Object -Unique)
-Write-Output ("  captured {0} lines ({1} KEY_ lines, {2} EV_REL lines)" -f $evLines.Count, $keyLines.Count, $relLines.Count)
-if ($keyNames.Count -gt 0) { Write-Output ("  unique keys: {0}" -f ($keyNames -join ", ")) }
-if ($relLines.Count -gt 0) { Write-Output "  NOTE: EV_REL lines present -> crown rotation may report as relative axis, not keys" }
+Write-Output ("  采集完成：{0} 行（其中 KEY_ 事件 {1} 行、EV_REL 相对轴事件 {2} 行）" -f $evLines.Count, $keyLines.Count, $relLines.Count)
+if ($keyNames.Count -gt 0) { Write-Output ("  捕获到的按键: {0}" -f ($keyNames -join ", ")) }
+if ($relLines.Count -gt 0) { Write-Output "  注意：出现 EV_REL 行 → 表冠旋转可能走相对轴上报，不是按键" }
 
-# ---------- 3 install probe APK ----------
-Section "3. Install Sensor Probe APK"
+# ---------- 3 安装探针 APK ----------
+Section "3. 安装传感器探针 APK"
 $apk = Join-Path $repo "android\sensor-probe\build\sensor-probe-debug.apk"
 if (-not (Test-Path $apk)) {
-    Write-Output "[X] APK not found: $apk"
-    Write-Output "    Build it first: powershell -File android\sensor-probe\build.ps1"
+    Write-Output "[X] 找不到 APK: $apk"
+    Write-Output "    请先构建：powershell -File android\sensor-probe\build.ps1"
     exit 1
 }
 $inst = Invoke-Adb install -r $apk
 Write-Output "  $inst"
 
-# ---------- 4 grant BODY_SENSORS ----------
-Section "4. Grant BODY_SENSORS"
+# ---------- 4 授权 BODY_SENSORS ----------
+Section "4. 授予 BODY_SENSORS 权限"
 $g = Invoke-Adb shell pm grant $pkg android.permission.BODY_SENSORS
 if ([string]::IsNullOrWhiteSpace($g)) {
-    Write-Output "  [OK] granted via pm grant"
+    Write-Output "  [OK] 已通过 pm grant 授权"
 } else {
-    Write-Output "  [!] pm grant said: $g"
-    Write-Output "      fallback: grant it on the watch when the app asks (then rerun this script)"
+    Write-Output "  [!] pm grant 返回: $g"
+    Write-Output "      备选：让 App 在表上弹授权窗时手动点允许（然后重跑本脚本）"
 }
 
-# ---------- 5 launch + logcat capture ----------
-Section "5. Launch probe + capture logcat ($LogcatSeconds s)"
+# ---------- 5 拉起 App + 采集 logcat ----------
+Section "5. 拉起探针 App 并采集 logcat（$LogcatSeconds 秒）"
 Invoke-Adb logcat -c | Out-Null
 $st = Invoke-Adb shell am start -n "$pkg/.MainActivity"
 Write-Output "  $st"
-Write-Output "  >>> keep the app in foreground during the capture"
+Write-Output "  >>> 采集期间请保持 App 在前台"
 $serial = Invoke-Adb devices
 if ($serial -match "\d+\.\d+\.\d+\.\d+:5555") {
-    Write-Output "  WI-FI MODE detected (watch off dock): put a finger on the back sensor;"
-    Write-Output "      for ECG values: back against your palm + a finger on the crown"
+    Write-Output "  检测到 Wi-Fi 模式（表已离座）：请把手指贴住表背传感器；"
+    Write-Output "      测 ECG 数值：表背贴住手掌 + 另一手指按在表冠上"
 } else {
-    Write-Output "  DOCKED MODE (back against the charger): values will be zero/noise - that is OK."
-    Write-Output "      This run answers 'does the HAL feed third-party apps' (callback count)."
-    Write-Output "      For meaningful values later: run adb-wifi.ps1, unplug, hold/wear the watch."
+    Write-Output "  停靠模式（表背贴着充电器）：数值会是零/噪声——没关系，"
+    Write-Output "      本次回答的是「HAL 是否向第三方 App 喂回调」（数回调次数）。"
+    Write-Output "      之后想拿真实数值：先跑 adb-wifi.ps1，拔线离座，手持/佩戴再测。"
 }
 $lc = Invoke-Adb shell "timeout $LogcatSeconds logcat -s PROBE STATS -v time"
 $lcFile = Join-Path $outDir "logcat-probe.txt"
@@ -124,33 +124,33 @@ $lc | Out-File -LiteralPath $lcFile -Encoding utf8
 $lcLines = @($lc -split "`n" | Where-Object { $_.Trim() })
 $first = @($lcLines | Where-Object { $_ -match "PROBE" })
 $stats = @($lcLines | Where-Object { $_ -match "STATS" })
-Write-Output ("  captured {0} PROBE lines, {1} STATS lines -> {2}" -f $first.Count, $stats.Count, $lcFile)
+Write-Output ("  采集完成：PROBE 行 {0} 条、STATS 行 {1} 条 → {2}" -f $first.Count, $stats.Count, $lcFile)
 
-# ---------- 6 sensor service registrations ----------
-Section "6. Sensor service registrations (our package)"
+# ---------- 6 传感器服务注册行 ----------
+Section "6. 传感器服务注册情况（我们的包名）"
 $dump = Invoke-Adb shell dumpsys sensorservice
 $dumpFile = Join-Path $outDir "sensorservice-dump.txt"
 $dump | Out-File -LiteralPath $dumpFile -Encoding utf8
 $ours = @(($dump -split "`n") | Where-Object { $_ -match "owapet" })
 if ($ours.Count -gt 0) {
-    Write-Output ("  found {0} registration lines mentioning our package:" -f $ours.Count)
+    Write-Output ("  找到 {0} 行包含我们包名的注册记录：" -f $ours.Count)
     $ours | Select-Object -First 25 | ForEach-Object { Write-Output "    $_" }
 } else {
-    Write-Output "  no registrations mentioning owapet (app may have been killed or sensors rejected)"
+    Write-Output "  没有包含 owapet 的注册行（App 可能被杀或传感器注册被拒）"
 }
 
-# ---------- 7 summary ----------
-Section "7. Summary"
+# ---------- 7 汇总 ----------
+Section "7. 汇总"
 $sum = @()
-$sum += "# device-test summary $stamp"
+$sum += "# device-test 汇总 $stamp"
 $sum += ""
 $sum += "device: $(($devLine -split "`t" | Select-Object -First 1))"
 $sum += ""
-$sum += "## P1 keys"
+$sum += "## P1 按键"
 if ($keyNames.Count -gt 0) { $sum += "unique keys: $($keyNames -join ', ')" } else { $sum += "no KEY_ events captured" }
 $sum += "KEY lines: $($keyLines.Count); EV_REL lines: $($relLines.Count)"
 $sum += ""
-$sum += "## Sensor probe"
+$sum += "## 传感器探针"
 $sum += "PROBE lines: $($first.Count); STATS lines: $($stats.Count)"
 $sum += "registered-sensor lines mentioning owapet in dumpsys: $($ours.Count)"
 $sum += ""
@@ -158,7 +158,7 @@ $sum += "## Key log lines (first 60)"
 $sum += $lcLines | Select-Object -First 60
 $sumPath = Join-Path $outDir "summary.md"
 $sum | Out-File -LiteralPath $sumPath -Encoding utf8
-Write-Output "  summary -> $sumPath"
+Write-Output "  汇总已保存 → $sumPath"
 Write-Output ""
-Write-Output "DONE. Hand the results folder to the agent for interpretation:"
+Write-Output "完成！请把结果目录交给 Agent 判读："
 Write-Output "  $outDir"
