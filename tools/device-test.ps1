@@ -108,8 +108,16 @@ Section "5. Launch probe + capture logcat ($LogcatSeconds s)"
 Invoke-Adb logcat -c | Out-Null
 $st = Invoke-Adb shell am start -n "$pkg/.MainActivity"
 Write-Output "  $st"
-Write-Output "  >>> keep the app in foreground; keep a finger on the back sensor so"
-Write-Output "      the PPG/heart-rate sensors see live tissue during the capture"
+Write-Output "  >>> keep the app in foreground during the capture"
+$serial = Invoke-Adb devices
+if ($serial -match "\d+\.\d+\.\d+\.\d+:5555") {
+    Write-Output "  WI-FI MODE detected (watch off dock): put a finger on the back sensor;"
+    Write-Output "      for ECG values: back against your palm + a finger on the crown"
+} else {
+    Write-Output "  DOCKED MODE (back against the charger): values will be zero/noise - that is OK."
+    Write-Output "      This run answers 'does the HAL feed third-party apps' (callback count)."
+    Write-Output "      For meaningful values later: run adb-wifi.ps1, unplug, hold/wear the watch."
+}
 $lc = Invoke-Adb shell "timeout $LogcatSeconds logcat -s PROBE STATS -v time"
 $lcFile = Join-Path $outDir "logcat-probe.txt"
 $lc | Out-File -LiteralPath $lcFile -Encoding utf8
