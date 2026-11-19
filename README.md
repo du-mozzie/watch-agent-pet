@@ -61,13 +61,15 @@
 | [docs/official-docs/](docs/official-docs/) | [OPPO 开放平台资料汇编](docs/official-docs/oppo-wear-dev-notes.md)：机型表、Wear Engine / 健康服务 SDK 字段、审核红线 vs 系统硬边界 |
 | [docs/device-probe/](docs/device-probe/) | [真机实测报告](docs/device-probe/probe-report-r1.md) + [传感器 dump 原文](docs/device-probe/sensorservice-dump.txt) |
 | [docs/tutorials/](docs/tutorials/) | 教程：[①上手连接](docs/tutorials/01-getting-started.md) · [②传感器探针判读](docs/tutorials/02-sensor-probe.md) · [③最小验证 APK](docs/tutorials/03-minimal-sensor-apk.md) |
-| [tools/](tools/) | `verify-watch.ps1` 一键探针脚本（+Windows 双击运行入口 `run-verify.bat`） |
+| [android/sensor-probe/](android/sensor-probe/) | **M0 核心交付：最小传感器验证 APK**（纯 Java 零依赖，`build.ps1` 一键构建，无需 Gradle） |
+| [AGENT.md](AGENT.md) | 开发 / 测试 / 推送全流程规范（Agent 与贡献者必读） |
+| [tools/](tools/) | `verify-watch.ps1` 基线探针 · `device-test.ps1` 真机测试会话（+双击入口） |
 
 ## 路线图
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
-| **M0** PoC | P1~P8 探针（按键/保活/功耗/长连/录音/播放/runtime/快捷键），通知形态打通 Claude Code → PC → 手表 | 🔄 进行中（第一轮已完成） |
+| **M0** PoC | P1~P8 探针（按键/保活/功耗/长连/录音/播放/runtime/快捷键），通知形态打通 Claude Code → PC → 手表 | 🔄 进行中：探针 APK 与真机测试脚本已就绪，待首轮真机验证 |
 | **M1** 宠物页 | 手表宠物页（五态动画 + 任务气泡）+ Wi-Fi 长连 + Claude Code 适配器 | ⏸ 待启动 |
 | **M2** 语音 | Qoder / Codex 适配器 + 语音输入 + 实时对话 | ⏸ |
 | **M3** 组件中心 | 声明式组件 + 形象导入 + 音效 + 桌面端设置 | ⏸ |

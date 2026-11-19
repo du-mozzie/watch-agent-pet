@@ -1,0 +1,179 @@
+# AGENT.md — 开发与测试流程
+
+> 本文件面向在本仓库工作的 AI 编码代理与人类贡献者，开工前必读。
+> 配套：[README.md](README.md)（项目定位）｜[docs/research/design-research.md](docs/research/design-research.md)（总体计划）｜[docs/tutorials/](docs/tutorials/)（操作细节）
+> 任何 Agent 拿到本仓库的会话，第一步是读本文件，第二步是查「§12 计划指针」确认当前进度，再动手。
+
+---
+
+## 0. 角色与总原则
+
+- 仓库主线：把 OPPO Watch 4 Pro 变成 Agent 桌宠 + 健康数据看板；**当前阶段 M0（PoC 验证）**。
+- 所有结论以**真机实测**为准；文档推断必须标注「待实测」。
+- 设备操作三红线：**不 root、不刷机、不换表盘**。脚本除「安装被测 App / 采集日志」这类测试动作外，对设备一律只读。
+- **真机测试永远请用户执行**：Agent 不自行要求连接设备；需要真机时，明确告知用户要做什么（放底座、开调试、跑哪个脚本），等用户完成并拿回结果。
+- **测试通过才 push**：对应功能的真机测试未通过前，只 commit 到本地，不 push 远程。
+
+## 1. 硬约束（违反即返工）
+
+| 约束 | 值 | 来源 |
+|---|---|---|
+| ABI | **仅 armeabi-v7a（32 位）**，无 arm64 | 真机 `ro.product.cpu.abilist` 实测 |
+| API | target 30 / min 27（Android 11 实测） | 真机 getprop |
+| 表单 | 必须声明 `android.hardware.type.watch`，主题用 `Theme.DeviceDefault` | 官方文档 |
+| 后台 | ROM 层事实：后台 sensor 持有 ≤1s、非健康类 ≤1 次/分钟、非 IM 禁后台联网 | 官方审核条款＝系统事实 |
+| 蓝牙带宽 | ~80KB/s，不传图片/音视频 | 官方文档 |
+| 安装权限 | 无 `INSTALL_PACKAGES`，组件中心不能自动装 APK | Android 权限模型 |
+| 屏幕 | 378×496 @320dpi（≈189×248 dp，安全区约 180×235） | 实测 |
+
+## 2. 环境要求与安装
+
+| 依赖 | 要求 | 说明 |
+|---|---|---|
+| JDK | 17（javac 8+ 即可编译，d8.bat 经 JAVA_HOME 找 java，需 JDK 11+） | |
+| Android SDK | `platforms;android-30` + `build-tools;34.0.0` | |
+| platform-tools | adb（解压到 `tools/platform-tools/` 或 PATH） | 官方下载 |
+
+SDK 安装（一次性，约 110MB）：
+
+```powershell
+# sdkmanager 在 cmdline-tools\latest\bin；SDK 根建议放在仓库同级目录 android-sdk（.gitignore 已忽略）
+$env:JAVA_HOME = '<jdk17 目录>'
+("y`n" * 10) | & <sdkmanager.bat> --licenses
+& <sdkmanager.bat> 'platforms;android-30' 'build-tools;34.0.0'
+```
+
+## 3. 仓库结构
+
+```
+android/sensor-probe/     M0 最小传感器验证 APK（纯 Java、零依赖、无 Gradle）
+  AndroidManifest.xml      watch feature + BODY_SENSORS + exported Activity
+  src/.../MainActivity.java  19 个目标 sensor 注册/计数/统计
+  build.ps1                一键构建（aapt2+javac+jar+d8+zipalign+apksigner）
+  build/                   产物与 debug.keystore（gitignored）
+tools/
+  verify-watch.ps1         基线探针（连接/系统/传感器清单/关键词命中）
+  device-test.ps1          真机测试会话（P1 按键 + sensor 出数验证，本流程核心）
+  run-verify.bat / device-test.bat   Windows 双击入口
+docs/
+  research/                设计调研（六项能力/五 Agent 矩阵/PoC 清单 P1~P8）
+  official-docs/           OPPO 开放平台资料汇编
+  device-probe/            真机实测报告（含 sensorservice-dump.txt）
+  tutorials/               教程①②③
+results/                   真机测试原始输出（gitignored，入库前脱敏）
+```
+
+## 4. 构建流程
+
+```powershell
+cd android\sensor-probe
+powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
+# 可选参数：-SdkPath <sdk目录> -JavaHome <jdk目录>（不传则自动探测）
+```
+
+- 产物：`android/sensor-probe/build/sensor-probe-debug.apk`（当前 ~12KB）
+- 构建在 `%TEMP%` 的 ASCII 暂存目录内进行，规避中文路径与原生工具的兼容问题
+- **为什么不用 Gradle**：探针级 APK 零依赖，Gradle 拉取（发行版+AGP+依赖）远重于产出；正式宠物 App（M1 起）再上 Gradle
+
+**本地静态校验（无需设备，Agent 可独立完成）**：
+
+```powershell
+& <build-tools>\aapt2.exe dump badging build\sensor-probe-debug.apk   # package/sdkVersion/uses-feature 正确性
+# apksigner verify 已在 build.ps1 内置；检查 minSdk=27/target=30/watch feature
+```
+
+## 5. 测试分层
+
+| 层 | 谁执行 | 触发时机 |
+|---|---|---|
+| L1 本地静态 | Agent | 每次构建后（§4 校验清单） |
+| L2 真机会话 | **用户** | 新 APK / 新探针脚本就绪时（§6 剧本） |
+| L3 结果判读 | Agent | 用户交回 results/ 目录后（§7） |
+
+## 6. 真机测试会话剧本（请用户执行时照此说明）
+
+前置：手表放磁吸底座 → 底座 USB 接电脑 → USB 调试已开 → 表上授权「一律允许」。
+
+用户只需一条命令（或双击 `tools/device-test.bat`）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\device-test.ps1
+```
+
+脚本自动完成：等设备 → **P1 按键采集**（提示用户转表冠/按功能键/按表冠/抬腕，`getevent -l` 录 25 秒）→ 安装探针 APK → `pm grant` 授权 → 拉起 App → 录 `logcat -s PROBE STATS` 20 秒 → 抓 `dumpsys sensorservice` 中 owapet 的注册行 → 汇总。
+
+产出：`results/device-test-<时间戳>/`（getevent.txt / logcat-probe.txt / sensorservice-dump.txt / summary.md）。
+
+**用户须知两条**（脚本中也会提示）：采集期间保持 App 在前台；手指贴住表背让 PPG/心率传感器见到活体。
+
+## 7. 结果判读与处理回路
+
+判读依据 [docs/tutorials/03-minimal-sensor-apk.md](docs/tutorials/03-minimal-sensor-apk.md) 的结果判读表：
+
+| logcat 现象 | 结论 | 动作 |
+|---|---|---|
+| `首发` + values 变化 + STATS `活跃` | ✅ 可用 | 直接进开发，结论写入 probe-report-rN |
+| 有回调但 values 恒 0 | ⚠️ HAL 空转 | 该项回退官方 SDK 路线 |
+| STATS 显示 Hz 远低于 dumpsys 声明 | ⚠️ 厂商限频 | 按实际 Hz 设计采样 |
+| 无任何回调 | ❌ 被拦截 | 查 sensor_privacy / 权限，仍不行回退 SDK |
+
+getevent 判读：`KEY_F1`/`KEY_F2` 出现＝表冠旋转可被 App 接住（P1 通过）；只有 `EV_REL`＝旋转走相对轴，需改用轴事件监听。
+
+- **通过**：整理 results/ → 脱敏 → 写 `docs/device-probe/probe-report-rN.md` → git commit → **git push**（§8 纪律）
+- **不通过**：原始结果交回 Agent 分析 → 定位（权限/HAL/频率）→ 修正代码或调整方案 → 重新构建 → 再约真机会话
+
+## 8. Git 纪律
+
+- 分支：单线开发，当前为 `master`（2026-11-19 仓库重建后从 main 切换，勿再建新分支）；小步提交；commit message 英文祈使句（沿用现有风格），正文可中文。
+- **推送纪律：对应功能真机测试通过后才 push**；push 前跑敏感扫描：
+  ```powershell
+  git grep -n -i -E 'CA6C[0-9A-F]{4}|github_pat_|ghp_|E:\\资料' -- .
+  ```
+- 不提交：`results/` 原始输出、`build/`、`*.keystore`、`platform-tools`/`cmdline-tools`/`android-sdk`、任何 token/密钥（.gitignore 已列）。
+- 报告入库前脱敏：序列号写 `CA6C****` 形式。
+- push 认证：凭据不写入仓库与 remote URL；用会话内临时凭据或用户侧凭证管理器。
+
+## 9. 安全与合规底线
+
+- 健康数据内容必须带「非医疗器械、不用于诊断、异常请就医」声明。
+- 数据不上云；PC 桥接仅局域网。
+- 本仓库不与 OPPO 存在隶属关系；引用官方条款以最新页面为准。
+- 不提供 root/刷机/改分区方法。
+
+## 10. PowerShell 5.1 工程坑位表（本仓库实测踩过，必须遵守）
+
+1. **脚本文件纯 ASCII**：PS 5.1 把无 BOM 的 UTF-8 当 ANSI/GBK 解析；`Get-Content`→改→`Set-Content` 的中文往返会毁文件（注释行被吞、行号漂移）。中文说明写在 .md 里，.ps1 一律 ASCII。
+2. **数组 splatting 传原生 exe 会坏参数**：`@args` 展开传给 javac/d8 会被切碎；只能用**字面量字符串参数**逐个传，多文件用 foreach 或先 `jar` 打包成单输入。
+3. **d8.bat / apksigner.bat 经 JAVA_HOME 找 java**：构建前把 `$env:JAVA_HOME` 指到 JDK 11+（系统 JAVA_HOME 若指向 JDK8 会报 class version 55 错）。
+4. **`$ErrorActionPreference='Stop'` + 原生命令 stderr**：javac 的警告会变成终止错误；构建脚本里用 `Continue` + 显式 `$LASTEXITCODE` 检查。
+5. **中文报错读法**：原生工具 stderr 是 GBK；重定向到文件后用 `[System.Text.Encoding]::GetEncoding(936)` 解码。
+6. adb 输出统一为 UTF-8：脚本开头 `[Console]::OutputEncoding = UTF8`。
+
+## 11. 硬件与协议事实卡（写代码前背下来）
+
+- 私有 sensor type 号：血氧 69633 / 成品 ECG 69636 / ECG 原始波 69812 / 腕温 69815 / 心率私有 69632 / 标准心率 21 / 12 路 PPG_RAW 69801~69814；免权限项见 [教程②速查表](docs/tutorials/02-sensor-probe.md)。
+- 事件模型六态：`idle|thinking|running|waiting|done|error`（JSON、<4KB/帧、局域网 WebSocket）。
+- 适配器优先级：Claude Code（HTTP hooks）> Qoder > Codex > WorkBuddy（tail 日志）> 豆包（粗粒度兜底）。
+- 产品叙事：宠物是「一键唤起的 App / 充电底座桌宠」，不是表盘。
+
+## 12. 计划指针（M0 · PoC 清单状态）
+
+| # | 验证项 | 状态 | 载体 |
+|---|---|---|---|
+| P1 | 按键事件能否被 App 截获（表冠是否 F1/F2） | 🔄 脚本就绪，待真机 | device-test.ps1 §2 |
+| P0+ | 私有 sensor 出数与频率（**注册≠出数**） | 🔄 APK 已构建，待真机 | device-test.ps1 §3-6 |
+| P2 | 前台服务保活（8h 断流 ≤1 次） | ⏸ 需宠物 App 骨架 | — |
+| P3 | 常亮/抬腕功耗 | ⏸ | — |
+| P4 | Wi-Fi 长连稳定性（24h 断连 <3 次） | ⏸ 需 PC 桥接 | — |
+| P5 | 麦克风录音 | ⏸ | — |
+| P6 | 音频播放与音量 | ⏸ | — |
+| P7 | 32 位 runtime（wasm3/QuickJS） | ⏸ 组件中心阶段 | — |
+| P8 | 官方「自定义按键」指向 App | ⏸ 真机会话可顺带人工验证 | — |
+
+**真机验证通过后的开发顺序**（M0 → M1）：① PC 桥接原型（事件模型 + Claude Code HTTP hook 适配器 + WebSocket 服务，假数据先跑）→ ② 手表宠物 App 骨架（Gradle 工程、五态动画、Wi-Fi 长连）→ ③ P2/P3/P4 稳定性实测。
+
+---
+
+*本文件随流程演进持续更新；与现状冲突时以最新实测报告为准。*
+
+> AI生成

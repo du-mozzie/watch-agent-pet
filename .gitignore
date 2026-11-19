@@ -7,6 +7,12 @@ cmdline-tools*.zip
 # 探针脚本生成物
 watch-report-*.md
 
+# 真机测试原始输出（入库前经脱敏整理为 docs/device-probe/probe-report-rN.md）
+results/
+
+# Android SDK 本地安装目录（见 AGENT.md §2）
+android-sdk/
+
 # 构建产物
 build/
 .gradle/
