@@ -80,6 +80,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
 ```powershell
 & <build-tools>\aapt2.exe dump badging build\sensor-probe-debug.apk   # package/sdkVersion/uses-feature 正确性
 # apksigner verify 已在 build.ps1 内置；检查 minSdk=27/target=30/watch feature
+
+# 脚本编码防回归（§10 坑 1）：所有 .ps1 必须纯 ASCII，改完必跑 PS 5.1 解析校验，两个数都应为 0
+$e=$null; [System.Management.Automation.Language.Parser]::ParseFile('<脚本路径>',[ref]$null,[ref]$e); $e.Count
+([System.IO.File]::ReadAllBytes('<脚本路径>') | Where-Object { $_ -gt 127 }).Count
 ```
 
 ## 5. 测试分层
