@@ -1,4 +1,4 @@
-# AGENT.md — 开发与测试流程
+﻿# AGENT.md — 开发与测试流程
 
 > 本文件面向在本仓库工作的 AI 编码代理与人类贡献者，开工前必读。
 > 配套：[README.md](README.md)（项目定位）｜[docs/research/design-research.md](docs/research/design-research.md)（总体计划）｜[docs/tutorials/](docs/tutorials/)（操作细节）
@@ -43,35 +43,42 @@ $env:JAVA_HOME = '<jdk17 目录>'
 & <sdkmanager.bat> 'platforms;android-30' 'build-tools;34.0.0'
 ```
 
-## 3. 仓库结构
+## 3. 仓库结构（v2，2026-11-19 重构；权威规范见 [docs/research/architecture.md](docs/research/architecture.md)）
+
+目录语义一句话：**`docs` 为什么 · `tools` 怎么测 · `watch` 手表上跑什么 · `pc` 电脑上跑什么 · `shared` 两端说什么话**。
 
 ```
-android/sensor-probe/     M0 最小传感器验证 APK（纯 Java、零依赖、无 Gradle）
-  AndroidManifest.xml      watch feature + BODY_SENSORS + exported Activity
-  src/.../MainActivity.java  19 个目标 sensor 注册/计数/统计
-  build.ps1                一键构建（aapt2+javac+jar+d8+zipalign+apksigner）
-  build/                   产物与 debug.keystore（gitignored）
-tools/
-  verify-watch.ps1         基线探针（连接/系统/传感器清单/关键词命中）
-  device-test.ps1          真机测试会话（P1 按键 + sensor 出数验证，本流程核心）
-  run-verify.bat / device-test.bat   Windows 双击入口
-docs/
-  research/                设计调研（六项能力/五 Agent 矩阵/PoC 清单 P1~P8）
+docs/                      知识层（为什么）
+  research/               design-research（缘起/PoC）· transport-selection（通信选型）· architecture（本结构权威）
   official-docs/           OPPO 开放平台资料汇编
-  device-probe/            真机实测报告（含 sensorservice-dump.txt）
+  device-probe/            真机实测报告 r1/r2/…（含 dump 原文）
   tutorials/               教程①②③
+tools/                     工具层（怎么测）
+  verify-watch.ps1         基线探针（只读）
+  device-test.ps1          真机测试会话（P1 按键 + sensor 出数，本流程核心）
+  adb-wifi.ps1             Wi-Fi adb 开关（离座手持测试）
+  run-verify.bat / device-test.bat    Windows 双击入口
+watch/                     手表端（Android APK，armeabi-v7a）
+  sensor-probe/            M0 探针 App（纯 Java、零依赖、无 Gradle）
+    AndroidManifest.xml / src/…/MainActivity.java / build.ps1 / build/（gitignored）
+pc/                        PC 桥接/展示层（Tauri 2，M1 起开发——结构预留）
+  adapter/ core/ transport/ ui/     见 pc/README.md
+shared/                    跨端协议
+  protocol.md              Wire 协议 v1（两端 transport 唯一权威）
 results/                   真机测试原始输出（gitignored，入库前脱敏）
 ```
+
+**可插拔通信（v2 核心设计）**：两端各有 `transport/` 层，实现同一 Wire 协议（[shared/protocol.md](shared/protocol.md)）。新增通道 = 只加一个 Transport/Channel 实现 + 注册表一行，core/sensor/ui 零改动；切换成本验收标准见 [architecture.md §2.3](docs/research/architecture.md)。
 
 ## 4. 构建流程
 
 ```powershell
-cd android\sensor-probe
+cd watch\\sensor-probe
 powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
 # 可选参数：-SdkPath <sdk目录> -JavaHome <jdk目录>（不传则自动探测）
 ```
 
-- 产物：`android/sensor-probe/build/sensor-probe-debug.apk`（当前 ~12KB）
+- 产物：`watch/sensor-probe/build/sensor-probe-debug.apk`（当前 ~12KB）
 - 构建在 `%TEMP%` 的 ASCII 暂存目录内进行，规避中文路径与原生工具的兼容问题
 - **为什么不用 Gradle**：探针级 APK 零依赖，Gradle 拉取（发行版+AGP+依赖）远重于产出；正式宠物 App（M1 起）再上 Gradle
 

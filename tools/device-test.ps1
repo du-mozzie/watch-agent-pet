@@ -3,7 +3,7 @@
   覆盖：P1 物理按键（getevent）+ 私有传感器出数验证（Sensor Probe APK）
   用法：powershell -NoProfile -ExecutionPolicy Bypass -File device-test.ps1
   前置：手表放底座 + USB 调试已授权（docs/tutorials/01-getting-started.md）；
-        APK 已由 android\sensor-probe\build.ps1 构建
+        APK 已由 watch\\sensor-probe\build.ps1 构建
   产出：results\device-test-<时间戳>\（getevent 日志 + logcat + 传感器注册行 + 汇总）
   设备动作：仅安装被测 App + 采集日志，其余只读。
   编码：本脚本为带 BOM 的 UTF-8（含中文提示）；PS 5.1 下必须保留 BOM，见 AGENT.md §10 坑 1。
@@ -85,10 +85,10 @@ if ($relLines.Count -gt 0) { Write-Output "  注意：出现 EV_REL 行 → 表�
 
 # ---------- 3 安装探针 APK（install 必须用字面量参数直接调用，见 AGENT.md §10 坑 2）----------
 Section "3. 安装传感器探针 APK"
-$apk = Join-Path $repo "android\sensor-probe\build\sensor-probe-debug.apk"
+$apk = Join-Path $repo "watch\\sensor-probe\build\sensor-probe-debug.apk"
 if (-not (Test-Path $apk)) {
     Write-Output "[X] 找不到 APK: $apk"
-    Write-Output "    请先构建：powershell -File android\sensor-probe\build.ps1"
+    Write-Output "    请先构建：powershell -File watch\\sensor-probe\build.ps1"
     exit 1
 }
 $inst = & $AdbPath install -r $apk 2>&1

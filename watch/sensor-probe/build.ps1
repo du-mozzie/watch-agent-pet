@@ -1,5 +1,5 @@
 ﻿<#
-  oppo-watch-agent-pet / android/sensor-probe 一键构建脚本（中文提示版）
+  oppo-watch-agent-pet / watch/sensor-probe 一键构建脚本（中文提示版）
   无 Gradle 构建：aapt2 + javac + jar + d8 + zipalign + apksigner（仅需 SDK build-tools）
   用法：powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1 [-SdkPath <sdk>] [-JavaHome <jdk>]
   产出：build\sensor-probe-debug.apk

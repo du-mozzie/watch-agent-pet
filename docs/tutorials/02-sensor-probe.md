@@ -1,4 +1,4 @@
-# 教程 2：传感器探针判读 —— 这块表到底开放了什么
+﻿# 教程 2：传感器探针判读 —— 这块表到底开放了什么
 
 > 一条命令，回答「血氧 / ECG / 腕温 能不能绕过官方 SDK 直接读」。
 > 本教程所有数据来自 OPPO Watch 4 Pro（OWW221）真机实测。
@@ -89,6 +89,6 @@ adb shell getevent -l    # 转表冠看 REL_WHEEL，按功能键看 KEY_F1
 - 带 BODY_SENSORS 的成品传感器（血氧/心率/ECG 成品）停靠位始终零回调——需亮屏+接触皮肤下复测区分「未测出新值」与「不喂第三方」
 - 12 路 PPG_RAW 中 G1 通道值全零，疑似备用/损坏通道
 
-**唯一可靠的验证方法**是装一个最小 APK 真实注册监听这些 type，数回调次数、看数值变化 —— 这正是[教程 3：最小验证 APK](03-minimal-sensor-apk.md) 的内容（现成的：`android/sensor-probe/`，`build.ps1` 一键构建）。
+**唯一可靠的验证方法**是装一个最小 APK 真实注册监听这些 type，数回调次数、看数值变化 —— 这正是[教程 3：最小验证 APK](03-minimal-sensor-apk.md) 的内容（现成的：`watch/sensor-probe/`，`build.ps1` 一键构建）。
 
 > AI生成

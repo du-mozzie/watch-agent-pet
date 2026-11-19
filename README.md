@@ -1,4 +1,4 @@
-# oppo-watch-agent-pet
+﻿# oppo-watch-agent-pet
 
 > 把 OPPO Watch 4 Pro 变成 AI Coding 桌宠与健康数据桌面看板 —— 基于真机实测的开源调研项目。
 >
@@ -18,6 +18,8 @@
 4. **形象与音效** —— 内置水豚形象，支持导入 [Petdex](https://petdex.dev/zh/docs) 格式宠物包
 5. **组件中心** —— 番茄钟 / 喝水提醒 / PC 状态等小组件（声明式 JSON + 轻量脚本）
 6. **健康数据桌面看板** —— 血氧 / ECG / 腕温 / 心率推到 PC 悬浮小部件
+
+**整体形态（v2 架构）**：手表端 App（采数据 + 宠物显示）↔ PC 桥接/展示层（Tauri 2）。两端各有一个**可插拔 transport 层**（主：BLE GATT 待 P9 验证；备：Wi-Fi 局域网），上层跑同一套 Wire 协议（六态事件模型，JSON <4KB/帧）——换通信方案 = 换一个 transport 实现，业务零改动。详见[总体架构](docs/research/architecture.md)与[通信选型](docs/research/transport-selection.md)。
 
 ## 已被真机验证的核心发现 🔍
 
@@ -57,13 +59,15 @@
 
 | 目录 | 内容 |
 |---|---|
-| [docs/research/](docs/research/) | [设计调研](docs/research/design-research.md)：六项能力逐条落地判定、五 Agent 接入矩阵、总体架构、PoC 清单 P1~P8 ＋ [通信通道选型](docs/research/transport-selection.md)（BLE 优先 + Wi-Fi 备选，2026-11-19） |
+| [docs/research/](docs/research/) | [设计调研](docs/research/design-research.md)：六项能力判定、五 Agent 矩阵、PoC P1~P9 ＋ [通信选型](docs/research/transport-selection.md)（BLE 主+Wi-Fi 备）＋ [总体架构](docs/research/architecture.md)（分层/目录/可插拔 transport，结构权威） |
 | [docs/official-docs/](docs/official-docs/) | [OPPO 开放平台资料汇编](docs/official-docs/oppo-wear-dev-notes.md)：机型表、Wear Engine / 健康服务 SDK 字段、审核红线 vs 系统硬边界 |
-| [docs/device-probe/](docs/device-probe/) | [真机实测报告](docs/device-probe/probe-report-r1.md) + [传感器 dump 原文](docs/device-probe/sensorservice-dump.txt) |
+| [docs/device-probe/](docs/device-probe/) | 真机实测报告：[r1](docs/device-probe/probe-report-r1.md)（传感器清单）· [r2](docs/device-probe/probe-report-r2.md)（亮屏出数 246.7Hz + 亮屏门控）＋ [dump 原文](docs/device-probe/sensorservice-dump.txt) |
 | [docs/tutorials/](docs/tutorials/) | 教程：[①上手连接](docs/tutorials/01-getting-started.md) · [②传感器探针判读](docs/tutorials/02-sensor-probe.md) · [③最小验证 APK](docs/tutorials/03-minimal-sensor-apk.md) |
-| [android/sensor-probe/](android/sensor-probe/) | **M0 核心交付：最小传感器验证 APK**（纯 Java 零依赖，`build.ps1` 一键构建，无需 Gradle） |
-| [AGENT.md](AGENT.md) | 开发 / 测试 / 推送全流程规范（Agent 与贡献者必读） |
-| [tools/](tools/) | `verify-watch.ps1` 基线探针 · `device-test.ps1` 真机测试会话（+双击入口） |
+| [watch/sensor-probe/](watch/sensor-probe/) | **手表端 M0 核心交付**：最小传感器验证 APK（纯 Java 零依赖，`build.ps1` 一键构建，无需 Gradle） |
+| [pc/](pc/) | **PC 桥接/展示层**（Tauri 2，M1 起开发；结构已预留：adapter/core/transport/ui） |
+| [shared/protocol.md](shared/protocol.md) | Wire 协议 v1：两端 transport 共同遵守的帧协议（seq/ACK 补传、六态事件模型） |
+| [AGENT.md](AGENT.md) | 开发 / 测试 / 推送全流程规范（Agent 与贡献者必读，含 v2 目录结构与可插拔通信说明） |
+| [tools/](tools/) | `verify-watch.ps1` 基线探针 · `device-test.ps1` 真机会话 · `adb-wifi.ps1` Wi-Fi adb（+双击入口） |
 
 ## 路线图
 
