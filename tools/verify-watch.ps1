@@ -167,7 +167,7 @@ Add-Report ""
 Add-Report "keyword hits (capability boundary):"
 $kwSets = @(
     @("heart rate",     @("heart", "type_heart_rate", "hr_rate")),
-    @("SpO2",          @("spo2", "blood", "oxygen", "oximeter", "pulse_ox")),
+    @("SpO2",          @("ppg_spo", "spo2", "blood", "oxygen", "oximeter", "pulse_ox")),
     @("ECG",           @("ecg", "electrocardio")),
     @("wrist temp",    @("wrist", "skin_temp", "temperature"))
 )
