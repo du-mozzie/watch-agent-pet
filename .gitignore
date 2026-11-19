@@ -1,0 +1,26 @@
+# Android 工具链二进制不入库（README 指引去官方下载）
+platform-tools/
+platform-tools*.zip
+cmdline-tools/
+cmdline-tools*.zip
+
+# 探针脚本生成物
+watch-report-*.md
+
+# 构建产物
+build/
+.gradle/
+local.properties
+*.apk
+*.ap_
+*.keystore
+*.jks
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# 系统
+.DS_Store
+Thumbs.db

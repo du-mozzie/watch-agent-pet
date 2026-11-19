@@ -1,0 +1,205 @@
+Captured at: 09:29:10.064
+Sensor Device:
+Total 42 h/w sensors, 41 running 0 disabled clients:
+Sensor List:
+0x00000001) G_Sensor                  | OPPO            | ver: 1 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000000
+	continuous | minRate=12.50Hz | maxRate=100.00Hz | FIFO (max,reserved) = (950, 0) events | non-wakeUp | 
+0x00000002) Mag_Sensor                | OPPO            | ver: 1 | type: android.sensor.magnetic_field(2) | perm: n/a | flags: 0x00000000
+	continuous | minRate=12.50Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00000003) O_Sensor                  | OPPO            | ver: 1 | type: android.sensor.orientation(3) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00000004) Gyro_Sensor               | OPPO            | ver: 1 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x00000000
+	continuous | minRate=12.50Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00000005) Light_Sensor              | OPPO            | ver: 1 | type: android.sensor.light(5) | perm: n/a | flags: 0x00000002
+	on-change | minRate=0.60Hz | maxRate=10.00Hz | FIFO (max,reserved) = (10240, 0) events | non-wakeUp | 
+0x00000006) Press_Sensor              | OPPO            | ver: 1 | type: android.sensor.pressure(6) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00000009) Gravity_Sensor            | OPPO            | ver: 3 | type: android.sensor.gravity(9) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x0000000a) LiAcc_Sensor              | OPPO            | ver: 3 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x0000000b) RV_Sensor                 | OPPO            | ver: 3 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x0000000e) Magnetic_Uncalibed        | OPPO            | ver: 1 | type: android.sensor.magnetic_field_uncalibrated(14) | perm: n/a | flags: 0x00000000
+	continuous | minRate=5.00Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x00000011) Significant_motion        | OPPO            | ver: 1 | type: android.sensor.significant_motion(17) | perm: n/a | flags: 0x00000005
+	one-shot | maxDelay=0us | minDelay=-1us | no batching | wakeUp | 
+0x00000012) Step_detector             | OPPO            | ver: 3 | type: android.sensor.step_detector(18) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000006
+	special-trigger | maxDelay=0us | minDelay=0us | no batching | non-wakeUp | 
+0x00000013) Step_Sensor               | OPPO            | ver: 1 | type: android.sensor.step_counter(19) | perm: android.permission.ACTIVITY_RECOGNITION | flags: 0x00000002
+	on-change | minRate=1.00Hz | maxRate=50.00Hz | no batching | non-wakeUp | 
+0x00000015) HEART_RATE                | OPPO            | ver: 3 | type: android.sensor.heart_rate(21) | perm: android.permission.BODY_SENSORS | flags: 0x00000002
+	on-change | minRate=0.20Hz | maxRate=1.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x0000001a) Wrist_Tilt                | OPPO            | ver: 1 | type: android.sensor.wrist_tilt_gesture(26) | perm: n/a | flags: 0x00000007
+	special-trigger | minRate=1.00Hz | maxRate=50.00Hz | no batching | wakeUp | 
+0x00000022) LLOB                      | OPPO            | ver: 3 | type: android.sensor.low_latency_offbody_detect(34) | perm: n/a | flags: 0x00000003
+	on-change | minRate=5.00Hz | maxRate=10.00Hz | no batching | wakeUp | 
+0x00010024) PPG_Sensor                | OPPO            | ver: 3 | type: com.google.wear.sensor.ppg(65572) | perm: android.permission.BODY_SENSORS | flags: 0x00000002
+	on-change | minRate=10.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00011000) PPG_HRM                   | OPPO            | ver: 1 | type: com.google.wear.sensor.ppg_hrm(69632) | perm: android.permission.BODY_SENSORS | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00011001) PPG_SPO                   | OPPO            | ver: 1 | type: com.google.wear.sensor.ppg_spo(69633) | perm: android.permission.BODY_SENSORS | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00011002) PPG_WEAR                  | OPPO            | ver: 1 | type: com.google.wear.sensor.ppg_wear(69634) | perm: android.permission.BODY_SENSORS | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00011003) CapSensor_POLL            | OPPO            | ver: 1 | type: com.google.wear.sensor.capsensor_poll(69635) | perm: n/a | flags: 0x00000002
+	on-change | minRate=1.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00011004) ECG_Sensor                | OPPO            | ver: 3 | type:   android.sensor.ecg(69636) | perm: android.permission.BODY_SENSORS | flags: 0x00000002
+	on-change | minRate=10.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x00011005) Cap_Sensor                | OPPO            | ver: 3 | type: android.sensor.capsensor(69637) | perm: n/a | flags: 0x00000002
+	on-change | minRate=10.00Hz | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x000110a9) PPG_RAW_G0                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_G0(69801) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110aa) PPG_RAW_R0                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_R0(69802) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110ab) PPG_RAW_IR0               | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_IR0(69803) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110ac) PPG_RAW_R1                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_R1(69804) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110ad) PPG_RAW_IR1               | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_IR1(69805) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110ae) PPG_RAW_R2                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_R2(69806) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110af) PPG_RAW_IR2               | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_IR2(69807) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b0) PPG_RAW_R3                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_R3(69808) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b1) PPG_RAW_IR3               | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_IR3(69809) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b2) PPG_RAW_R4                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_R4(69810) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b3) PPG_RAW_IR4               | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_IR4(69811) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b4) ECG_RAW_PRO               | OPPO            | ver: 1 | type: com.google.wear.sensor.ECG_RAW_PRO(69812) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b5) GPS_MAIN                  | OPPO            | ver: 1 | type: com.google.wear.sensor.gps_main(69813) | perm: n/a | flags: 0x00000002
+	on-change | minRate=33.33Hz | maxRate=10000.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b6) PPG_RAW_G1                | OPPO            | ver: 1 | type: com.google.wear.sensor.PPG_RAW_G1(69814) | perm: n/a | flags: 0x00000000
+	continuous | minRate=1.00Hz | maxRate=500.00Hz | FIFO (max,reserved) = (40960, 0) events | non-wakeUp | 
+0x000110b7) WRIST_TEMPERATURE         | OPPO            | ver: 1 | type: com.google.wear.sensor.w_temperature(69815) | perm: n/a | flags: 0x00000002
+	on-change | minRate=5.00Hz | maxRate=100.00Hz | FIFO (max,reserved) = (10240, 0) events | non-wakeUp | 
+0x000110b8) CUST_ACC                  | OPPO            | ver: 1 | type: com.google.wear.sensor.cust_acc(69816) | perm: n/a | flags: 0x00000000
+	continuous | minRate=12.50Hz | maxRate=100.00Hz | FIFO (max,reserved) = (950, 0) events | non-wakeUp | 
+0x000110b9) CUST_GYRO                 | OPPO            | ver: 1 | type: com.google.wear.sensor.cust_gyro(69817) | perm: n/a | flags: 0x00000000
+	continuous | minRate=12.50Hz | maxRate=100.00Hz | FIFO (max,reserved) = (950, 0) events | non-wakeUp | 
+0x000110ba) STATUS                    | OPPO            | ver: 3 | type: com.google.wear.sensor.status(69818) | perm: n/a | flags: 0x00000002
+	on-change | minRate=5.00Hz | maxRate=10.00Hz | no batching | non-wakeUp | 
+0x5f636779) Corrected Gyroscope Sensor | AOSP            | ver: 1 | type: android.sensor.gyroscope(4) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f676172) Game Rotation Vector Sensor | AOSP            | ver: 3 | type: android.sensor.game_rotation_vector(15) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f676273) Gyroscope Bias (debug)    | AOSP            | ver: 1 | type: android.sensor.accelerometer(1) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f67656f) GeoMag Rotation Vector Sensor | AOSP            | ver: 3 | type: android.sensor.geomagnetic_rotation_vector(20) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f677276) Gravity Sensor            | AOSP            | ver: 3 | type: android.sensor.gravity(9) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f6c696e) Linear Acceleration Sensor | AOSP            | ver: 3 | type: android.sensor.linear_acceleration(10) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f726f76) Rotation Vector Sensor    | AOSP            | ver: 3 | type: android.sensor.rotation_vector(11) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+0x5f797072) Orientation Sensor        | AOSP            | ver: 1 | type: android.sensor.orientation(3) | perm: n/a | flags: 0x00000000
+	continuous | maxDelay=0us | maxRate=100.00Hz | no batching | non-wakeUp | 
+Fusion States:
+9-axis fusion disabled (0 clients), gyro-rate= 200.00Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+game fusion(no mag) disabled (0 clients), gyro-rate= 200.00Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+geomag fusion (no gyro) disabled (0 clients), gyro-rate= 200.00Hz, q=< 0, 0, 0, 0 > (0), b=< 0, 0, 0 >
+Recent Sensor events:
+Light_Sensor: last 50 events
+	 1 (ts=8910.568981506, wall=09:28:34.915) 3648.00, 14621.00, 100.00, 
+	 2 (ts=8912.244847207, wall=09:28:36.588) 2803.00, 11844.00, 100.00, 
+	 3 (ts=8912.447484207, wall=09:28:36.792) 3180.00, 12936.00, 100.00, 
+	 4 (ts=8912.646031207, wall=09:28:36.989) 3492.00, 14210.00, 100.00, 
+	 5 (ts=8912.843419207, wall=09:28:37.186) 3513.00, 14316.00, 100.00, 
+	 6 (ts=8913.043675207, wall=09:28:37.388) 3480.00, 14185.00, 100.00, 
+	 7 (ts=8913.243199207, wall=09:28:37.589) 3495.00, 14256.00, 100.00, 
+	 8 (ts=8913.443456207, wall=09:28:37.788) 3520.00, 14353.00, 100.00, 
+	 9 (ts=8913.641576207, wall=09:28:37.986) 3443.00, 13956.00, 100.00, 
+	10 (ts=8914.290131452, wall=09:28:38.637) 3125.00, 13029.00, 100.00, 
+	11 (ts=8914.787812452, wall=09:28:39.133) 2820.00, 12034.00, 100.00, 
+	12 (ts=8915.282685452, wall=09:28:39.634) 3398.00, 13801.00, 100.00, 
+	13 (ts=8915.780854452, wall=09:28:40.127) 1116.00, 4667.00, 100.00, 
+	14 (ts=8916.279084452, wall=09:28:40.627) 3528.00, 14146.00, 100.00, 
+	15 (ts=8916.779450452, wall=09:28:41.125) 3488.00, 14045.00, 100.00, 
+	16 (ts=8917.277558452, wall=09:28:41.630) 3263.00, 13362.00, 100.00, 
+	17 (ts=8917.775544452, wall=09:28:42.129) 2610.00, 11065.00, 100.00, 
+	18 (ts=8918.273835452, wall=09:28:42.622) 2706.00, 11296.00, 100.00, 
+	19 (ts=8918.769868452, wall=09:28:43.121) 3520.00, 14333.00, 100.00, 
+	20 (ts=8919.270234452, wall=09:28:43.620) 3614.00, 14734.00, 100.00, 
+	21 (ts=8919.768525452, wall=09:28:44.121) 3597.00, 14630.00, 100.00, 
+	22 (ts=8920.265290452, wall=09:28:44.617) 3615.00, 14747.00, 100.00, 
+	23 (ts=8920.763642452, wall=09:28:45.111) 3620.00, 14752.00, 100.00, 
+	24 (ts=8921.260651452, wall=09:28:45.612) 3619.00, 14741.00, 100.00, 
+	25 (ts=8921.760041452, wall=09:28:46.111) 3620.00, 14748.00, 100.00, 
+	26 (ts=8922.258149452, wall=09:28:46.610) 3609.00, 14712.00, 100.00, 
+	27 (ts=8922.756074452, wall=09:28:47.108) 3619.00, 14752.00, 100.00, 
+	28 (ts=8923.254487452, wall=09:28:47.606) 3575.00, 14571.00, 100.00, 
+	29 (ts=8923.751496452, wall=09:28:48.103) 3380.00, 13743.00, 100.00, 
+	30 (ts=8924.250153452, wall=09:28:48.601) 3513.00, 14281.00, 100.00, 
+	31 (ts=8937.091746765, wall=09:29:01.432) 3012.00, 12826.00, 100.00, 
+	32 (ts=8937.292613765, wall=09:29:01.634) 3068.00, 12864.00, 100.00, 
+	33 (ts=8937.493296765, wall=09:29:01.836) 3546.00, 14480.00, 100.00, 
+	34 (ts=8937.691234765, wall=09:29:02.032) 3585.00, 14655.00, 100.00, 
+	35 (ts=8937.890452765, wall=09:29:02.233) 3545.00, 14492.00, 100.00, 
+	36 (ts=8938.089488765, wall=09:29:02.431) 3380.00, 13891.00, 100.00, 
+	37 (ts=8938.289866765, wall=09:29:02.631) 3303.00, 13644.00, 100.00, 
+	38 (ts=8938.488353765, wall=09:29:02.830) 3067.00, 12737.00, 100.00, 
+	39 (ts=8939.125107707, wall=09:29:03.469) 3616.00, 14714.00, 100.00, 
+	40 (ts=8939.621079707, wall=09:29:03.966) 3556.00, 14523.00, 100.00, 
+	41 (ts=8940.120163707, wall=09:29:04.465) 3605.00, 14689.00, 100.00, 
+	42 (ts=8940.619980707, wall=09:29:04.966) 3596.00, 14637.00, 100.00, 
+	43 (ts=8941.116501707, wall=09:29:05.461) 3598.00, 14645.00, 100.00, 
+	44 (ts=8941.614914707, wall=09:29:05.961) 3591.00, 14616.00, 100.00, 
+	45 (ts=8942.111801707, wall=09:29:06.456) 3576.00, 14569.00, 100.00, 
+	46 (ts=8942.611191707, wall=09:29:06.957) 3562.00, 14526.00, 100.00, 
+	47 (ts=8943.109238707, wall=09:29:07.455) 3560.00, 14532.00, 100.00, 
+	48 (ts=8943.606186707, wall=09:29:07.952) 3562.00, 14538.00, 100.00, 
+	49 (ts=8944.105576707, wall=09:29:08.452) 3564.00, 14551.00, 100.00, 
+	50 (ts=8944.602524707, wall=09:29:08.949) 3571.00, 14570.00, 100.00, 
+Active sensors:
+Socket Buffer size = 984 events
+WakeLock Status: not held 
+Mode : NORMAL
+Sensor Privacy: disabled
+0 active connections
+0 direct connections
+Previous Registrations:
+09:29:09 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:29:02 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+09:29:02 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:29:01 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+09:28:49 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:28:38 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+09:28:38 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:28:36 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+09:28:35 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:27:57 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+09:27:57 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:27:55 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+09:25:30 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:25:22 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+09:25:22 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+09:25:20 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+08:01:50 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+08:01:36 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+08:01:36 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+08:01:34 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+08:00:19 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+08:00:04 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+08:00:04 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+08:00:01 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+07:30:32 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+07:30:30 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+07:30:30 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+07:30:28 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+07:30:26 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+07:30:12 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+07:30:12 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+07:30:10 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+07:00:43 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+07:00:28 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=500000us batchingPeriod=0us
+07:00:28 - 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController
+07:00:26 + 0x00000005 pid=  908 uid= 1000 package=com.android.server.display.AutomaticBrightnessController samplingPeriod=200000us batchingPeriod=0us
+
+
+AI生成
