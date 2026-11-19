@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'">
+  <title>Watch Agent Pet</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside>
+    <div class="brand"><span class="brand-icon">w.</span><div>WATCH AGENT PET<small>你的腕上工作伙伴</small></div></div>
+    <div class="nav-label">WORKSPACE</div>
+    <a class="nav active" href="#overview">◈ <span>陪伴空间</span></a>
+    <a class="nav" href="#connections">⇄ <span>设备与连接</span></a>
+    <a class="nav" href="#plugins">▦ <span>插件能力</span></a>
+    <div class="aside-bottom"><span class="dot"></span> 本地运行 · 数据不上云<small id="platform">正在识别系统</small><small>v0.1 · 开发预览</small></div>
+  </aside>
+  <main id="overview">
+    <header><div><div class="eyebrow">A LITTLE COMPANY, A BETTER FLOW</div><h1>今天，也一起专注。</h1><p>把任务留在视野里，让陪伴自然发生。</p></div><label class="pin"><input id="pin" type="checkbox"> 窗口置顶</label></header>
+    <div class="notice"><span>模拟体验</span> 当前数值来自模拟手表，不是真实健康测量。OPPO / BLE 待真机接入。</div>
+    <div id="error" class="error" role="alert" hidden></div>
+    <section class="hero-grid">
+      <article class="pet-card"><div class="card-heading"><span>你的桌宠</span><span id="connection-status" class="badge">正在连接</span></div>
+        <div class="pet-stage"><div class="orbit"></div><div class="pet" id="pet" data-state="calm"><div class="ear left"></div><div class="ear right"></div><div class="face"><span class="eye"></span><span class="eye"></span><div class="muzzle">ω</div><span class="cheek a"></span><span class="cheek b"></span></div><div class="feet"></div></div><div class="shadow"></div><span class="spark">✦</span></div>
+        <h2 id="pet-state">守护中</h2><p id="pet-message">等待手表上报第一份健康数据。</p><div class="pet-footer"><span class="dot"></span><span id="device-label">等待设备</span><span id="transport-label"></span></div>
+      </article>
+      <article class="agent-card"><div class="card-heading"><span>本地采集</span><span class="muted">JSONL · 按天分文件</span></div><h2>每一次采样，都留在本机。</h2><p>手表上报的健康数据持续采集到本地目录；目录可随时更换，数据不上云、不外传。</p>
+        <div class="storage-row"><label for="data-dir">数据目录</label><input id="data-dir" type="text" readonly placeholder="尚未设置"><button id="pick-dir" class="text-button">选择目录…</button></div>
+        <div class="storage-stats"><span id="storage-records">0 条记录</span><span id="storage-files">0 个文件</span><span id="storage-error" class="muted"></span></div><div class="agent-actions"><small>文件格式 health-日期.jsonl，每行一条采样；磁盘错误不会中断采集。</small></div></article>
+    </section>
+    <section class="health-section"><div class="section-heading"><h2>身体的小信号 <span>模拟数据</span></h2><small id="freshness">等待采样</small></div><div class="health-grid">
+      <article class="metric"><div>♡ 心率 <span>HEART RATE</span></div><strong id="heart-rate">—</strong><small>bpm</small><p id="heart-rate-quality">等待采样</p><div class="bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></article>
+      <article class="metric"><div>◉ 血氧 <span>BLOOD OXYGEN</span></div><strong id="spo2">—</strong><small>%</small><p id="spo2-quality">等待采样</p></article>
+      <article class="metric"><div>☼ 腕温 <span>WRIST TEMPERATURE</span></div><strong id="temperature">—</strong><small>°C</small><p id="temperature-quality">等待采样</p></article>
+    </div><p class="disclaimer">非医疗器械，不用于诊断，异常请就医。数据仅在本机内存展示。</p></section>
+    <section id="connections" class="settings-card"><div class="section-heading"><div><h2>设备与连接</h2><p>独立选择设备适配器与通信通道。</p></div><span id="connection-detail" class="muted"></span></div><div class="settings-row"><label>手表<select id="device-select"></select></label><label>通信通道<select id="transport-select"></select></label><button id="apply" class="primary">应用并连接</button><button id="disconnect">断开</button><button id="import">导入配置</button></div></section>
+    <section id="plugins" class="plugins-card"><div class="section-heading"><h2>已注册插件</h2><small>可信静态注册 · 接口 v1</small></div><div id="plugin-list"></div></section>
+    <footer>WATCH AGENT PET <span>小小的伙伴，长久的陪伴。</span></footer>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

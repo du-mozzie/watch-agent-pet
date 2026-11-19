@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "host": {"platform": "auto"},
+  "storage": {"dataDir": "data"},
+  "devices": [{
+    "instanceId": "demo-watch",
+    "profile": "simulator-full",
+    "enabled": true,
+    "connection": {
+      "codec": "json-v1",
+      "transportPriority": ["memory", "loopback-websocket"],
+      "allowFallback": false,
+      "options": {}
+    }
+  }]
+}

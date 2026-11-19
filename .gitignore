@@ -7,7 +7,7 @@ cmdline-tools*.zip
 # 探针脚本生成物
 watch-report-*.md
 
-# 真机测试原始输出（入库前经脱敏整理为 docs/device-probe/probe-report-rN.md）
+# 真机测试原始输出（入库前经脱敏整理为 devices/oppo-watch-4-pro/docs/reports/probe-report-rN.md）
 results/
 
 # Android SDK 本地安装目录（见 AGENT.md §2）
@@ -30,3 +30,12 @@ local.properties
 # 系统
 .DS_Store
 Thumbs.db
+
+# PC runtime and packaging
+node_modules/
+release/
+test-results/
+config/*.local.json
+
+# Agent 会话临时调试文件
+.temp/

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "host": {
+    "platform": "auto"
+  },
+  "storage": {
+    "dataDir": "D:/watch-agent-pet-data"
+  },
+  "devices": [
+    {
+      "instanceId": "watch-01",
+      "profile": "oppo-watch-4-pro",
+      "enabled": true,
+      "connection": {
+        "codec": "json-v1",
+        "transportPriority": [
+          "ble-gatt",
+          "websocket"
+        ],
+        "allowFallback": false,
+        "credentialRef": "watch-agent-pet/watch-01",
+        "options": {
+          "ble-gatt": {
+            "peerRef": "paired-watch-01"
+          },
+          "websocket": {
+            "endpoint": "wss://desktop.local:8765"
+          }
+        }
+      }
+    }
+  ]
+}

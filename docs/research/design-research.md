@@ -1,5 +1,7 @@
 # OPPO Watch 4 Pro × Agent 桌宠：设计调研
 
+> 本文保留 OPPO 场景的历史假设和选型，不代表已实现能力。最新模块边界以 [v3 总体架构](architecture.md)为准，协议以[当前草案](../../contracts/protocol.md)为准。
+
 > 目标：以现有 OPPO Watch 4 Pro 的硬件为基础，复刻 HachimoDock 类「AI Coding 陪伴设备」的六项能力（Agent 状态跟随 / 语音输入 / 实时对话 / 形象与音效 / 组件中心 / 设备设置），同时**完整保留手表原有功能**，并支持对接 codex、claude code、qoder、豆包、workbuddy 多个 Agent 客户端。
 >
 > 调研时间：2026-11-17　｜　结论均基于公开资料 + 官方开发文档推断，标注「待实测」的项必须在真机上验证后才能进入开发。
@@ -160,7 +162,7 @@ ColorOS Watch 对第三方 App 权限管得很紧（社区共识："OPPO 手表�
 └──────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-> **v2 修订（2026-11-19）**：传输层从「WebSocket 单通道」升级为**可插拔 transport**（BLE 主 + Wi-Fi 备），协议抽出为 [shared/protocol.md](../../shared/protocol.md) 单点权威；分层与目录规范见 [architecture.md](architecture.md)。
+> **v2 修订（2026-11-19）**：传输层从「WebSocket 单通道」升级为**可插拔 transport**（BLE 主 + Wi-Fi 备），协议抽出为 [contracts/protocol.md](../../contracts/protocol.md) 单点权威；分层与目录规范见 [architecture.md](architecture.md)。
 
 ### 5.1 事件模型（建议固定，避免五个适配器各写一套）
 
@@ -273,7 +275,7 @@ adb shell dumpsys window | findstr mCurrentFocus   # 观察系统按键行为
 | 阶段 | 内容 | 周期 | 出口标准 |
 |---|---|---|---|
 | **M0** | 跑完 P1～P8；用通知形态打通 Claude Code → PC → 手表 | 1～2 周 | 八项 PoC 有明确结论，Go/No-Go 决策 |
-| **M1** | 手表宠物页（五态动画 + 任务气泡）+ Wi-Fi 长连 + Claude Code 适配器 | 2～3 周 | 抬腕能看到实时状态，延迟 <2s |
+| **M1** | 手表宠物页（六态动画 + 任务气泡）+ Wi-Fi 长连 + Claude Code 适配器 | 2～3 周 | 抬腕能看到实时状态，延迟 <2s |
 | **M2** | Qoder / Codex 适配器 + 语音输入（录制→STT→追加→确认发送）+ 实时对话 | 3～4 周 | 语音端到端可用，误触发率可接受 |
 | **M3** | 组件中心（声明式 + 脚本）+ 形象导入 + 音效 + 桌面端设置 | 4～6 周 | 能装/卸一个自制组件，形象可替换 |
 | **M4** | WorkBuddy 日志适配 + 豆包兜底 + 稳定性/功耗打磨 | 2～3 周 | 连续 7 天不掉线，日耗可接受 |

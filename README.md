@@ -1,104 +1,78 @@
-﻿# oppo-watch-agent-pet
+# watch-agent-pet
 
-> 把 OPPO Watch 4 Pro 变成 AI Coding 桌宠与健康数据桌面看板 —— 基于真机实测的开源调研项目。
->
-> Turn an OPPO Watch 4 Pro into an AI-coding desk pet and health dashboard — an open research project backed by real-device probes.
+手表健康数据上报与 PC 桌宠展示系统：手表负责采集上报健康数据，PC 提供桌宠形象、健康看板与本地数据落盘。设备、通信通道与 PC 系统适配均可通过配置替换。
 
-**English overview**: This project investigates how to repurpose the OPPO Watch 4 Pro (ColorOS Watch 6.0 / Android 11) into a companion device for AI coding agents (Claude Code / Codex / Qoder / WorkBuddy / Doubao) and a desktop health-data dashboard, while keeping all original watch features intact. All conclusions are based on official OPPO open-platform documentation plus a first round of real-device probes via ADB. Current phase: **research + verification (pre-alpha)**. See the docs tree below; most content is written in Chinese.
+当前为 **M1a / pre-alpha**。已实现 Electron PC 客户端、静态插件运行时、配置加载、两种模拟手表、内存/本机 WebSocket 通道与健康数据本地采集（目录可配置）。OPPO 目前仍为探针阶段，BLE 与真实手表通信待接入。
 
----
+## 核心功能（当前）
 
-## 这是什么项目
+- **手表上报**：手表端只做健康数据采集上报（心率/血氧/腕温），不再接收 Agent 状态下发。
+- **桌宠展示**：PC 端桌宠展示健康摘要与连接状态，健康看板显示心率/血氧/腕温及数据质量。
+- **本地采集**：健康数据持续写入本机 JSONL 文件（按天分文件），**数据目录可配置、可运行中切换**，磁盘错误不中断采集；数据不上云。
+- **可插拔**：设备、通信通道（Session/Codec/Transport 分离）、PC 系统适配按配置选择。
 
-以一块**没有 root、不刷机、不换表盘**的 OPPO Watch 4 Pro 为硬件底座，复刻 [HachimoDock（哈基米机）](https://www.antutu.com/doc/138107) 式「AI Coding 陪伴设备」的六项能力，并顺带把它变成 PC 桌面上的健康数据看板：
+## 后期扩展（未实现，仅设计预留）
 
-1. **Agent 状态跟随** —— 手表实时显示 Claude Code / Codex / Qoder 等客户端的思考/执行/等待/完成/错误六态
-2. **语音输入** —— 手表录音 → PC 转写 → 注入目标输入框（追加，非覆盖）
-3. **实时对话** —— 对宠物长按说话，走用户自己配置的 STT / LLM / TTS 服务
-4. **形象与音效** —— 内置水豚形象，支持导入 [Petdex](https://petdex.dev/zh/docs) 格式宠物包
-5. **组件中心** —— 番茄钟 / 喝水提醒 / PC 状态等小组件（声明式 JSON + 轻量脚本）
-6. **健康数据桌面看板** —— 血氧 / ECG / 腕温 / 心率推到 PC 悬浮小部件
+- **Agent 状态接入**：把 Claude Code、Codex、豆包、Qoder 等客户端的状态结果接入 PC 端展示（协议已预留 agent-state 通道；不下发手表）。
+- **自定义模型分析**：配置自己的模型（本地或云），对采集的健康数据做分析。
 
-**整体形态（v2 架构）**：手表端 App（采数据 + 宠物显示）↔ PC 桥接/展示层（Tauri 2）。两端各有一个**可插拔 transport 层**（主：BLE GATT 待 P9 验证；备：Wi-Fi 局域网），上层跑同一套 Wire 协议（六态事件模型，JSON <4KB/帧）——换通信方案 = 换一个 transport 实现，业务零改动。详见[总体架构](docs/research/architecture.md)与[通信选型](docs/research/transport-selection.md)。
+## 整体设计
 
-## 已被真机验证的核心发现 🔍
+- **设备可替换**：机型代码、配套资料、探针和教程放在 devices/<机型>/，权限、传感器和屏幕差异由设备适配器处理。
+- **通信可替换**：会话、协议编解码、字节传输分离，BLE/WebSocket 与 JSON 等编码独立选择。
+- **PC 可扩展**：展示与桥接分离，Windows/macOS/Linux 差异通过平台接口处理。
 
-2026-11-19 第一轮探针（OWW221，Android 11 / API 30 / armeabi-v7a）：
+详见[整体架构](docs/research/architecture.md)、[接口契约](contracts/ports.md)、[配置样例](config/runtime.example.json)。可运行配置见 [demo.json](config/demo.json)；原真机配置仍是未实现方案示例。
 
-| 发现 | 意义 |
-|---|---|
-| 42 个硬件传感器、41 个在运行 | 传感器层完全向系统注册 |
-| **血氧 `PPG_SPO`(69633)** 需 BODY_SENSORS 即可读 | 无需 OPPO 开发者账号 / SDK / 手机中转 |
-| **ECG `ECG_Sensor`(69636) + `ECG_RAW_PRO`(69812)** | 前者需权限，**原始波形免权限** |
-| **腕温 `WRIST_TEMPERATURE`(69815) 免权限** | 第三方 App 注册即用 |
-| **12 路原始 PPG（绿/红/红外）全部免权限** | 心率/血氧可以自己算算法，不依赖厂商 |
-| 表冠旋转疑似映射 F1/F2 keylayout | 「表冠当物理旋钮」玩法技术上有戏，待 `getevent` 确认 |
-
-完整表格见 [docs/device-probe/probe-report-r1.md](docs/device-probe/probe-report-r1.md)。
-
-> ⚠️ **注册 ≠ 出数**：`dumpsys` 里有条目不代表 HAL 会把数据交给第三方 App，实际可用性需按 [教程 3](docs/tutorials/03-minimal-sensor-apk.md) 装一个最小 APK 验证回调。
-
-## 快速开始
-
-只需一块 OPPO Watch 4 Pro、磁吸充电底座、一根**能传数据**的 USB 线：
-
-```bash
-# 1. 下载 Android platform-tools（含 adb）解压到 tools/platform-tools/
-#    https://developer.android.com/tools/releases/platform-tools
-
-# 2. 手表开启开发者模式 + USB 调试（照着教程第 1 篇做，2 分钟）
-#    https://github.com/du-mozzie/oppo-watch-agent-pet/blob/main/docs/tutorials/01-getting-started.md
-
-# 3. Windows 用户直接双击 tools/run-verify.bat
-#    （或：powershell -NoProfile -ExecutionPolicy Bypass -File tools/verify-watch.ps1）
-```
-
-脚本纯只读，不改手表任何内容，会生成 `watch-report-<时间戳>.md` 探针报告。
-
-## 文档导航
+## 目录导航
 
 | 目录 | 内容 |
 |---|---|
-| [docs/research/](docs/research/) | [设计调研](docs/research/design-research.md)：六项能力判定、五 Agent 矩阵、PoC P1~P9 ＋ [通信选型](docs/research/transport-selection.md)（BLE 主+Wi-Fi 备）＋ [总体架构](docs/research/architecture.md)（分层/目录/可插拔 transport，结构权威） |
-| [docs/official-docs/](docs/official-docs/) | [OPPO 开放平台资料汇编](docs/official-docs/oppo-wear-dev-notes.md)：机型表、Wear Engine / 健康服务 SDK 字段、审核红线 vs 系统硬边界 |
-| [docs/device-probe/](docs/device-probe/) | 真机实测报告：[r1](docs/device-probe/probe-report-r1.md)（传感器清单）· [r2](docs/device-probe/probe-report-r2.md)（亮屏出数 246.7Hz + 亮屏门控）＋ [dump 原文](docs/device-probe/sensorservice-dump.txt) |
-| [docs/tutorials/](docs/tutorials/) | 教程：[①上手连接](docs/tutorials/01-getting-started.md) · [②传感器探针判读](docs/tutorials/02-sensor-probe.md) · [③最小验证 APK](docs/tutorials/03-minimal-sensor-apk.md) |
-| [watch/sensor-probe/](watch/sensor-probe/) | **手表端 M0 核心交付**：最小传感器验证 APK（纯 Java 零依赖，`build.ps1` 一键构建，无需 Gradle） |
-| [pc/](pc/) | **PC 桥接/展示层**（Tauri 2，M1 起开发；结构已预留：adapter/core/transport/ui） |
-| [shared/protocol.md](shared/protocol.md) | Wire 协议 v1：两端 transport 共同遵守的帧协议（seq/ACK 补传、六态事件模型） |
-| [AGENT.md](AGENT.md) | 开发 / 测试 / 推送全流程规范（Agent 与贡献者必读，含 v2 目录结构与可插拔通信说明） |
-| [tools/](tools/) | `verify-watch.ps1` 基线探针 · `device-test.ps1` 真机会话 · `adb-wifi.ps1` Wi-Fi adb（+双击入口） |
+| [apps](apps/README.md) | PC 客户端与手表应用入口 |
+| [core](core/README.md) | 业务边界 |
+| [devices/oppo-watch-4-pro](devices/oppo-watch-4-pro/README.md) | 探针、测试工具、官方资料、实测报告、教程 |
+| [connectivity](connectivity/README.md) | 会话、编码与可替换通信实现 |
+| [platforms](platforms/README.md) | Electron PC 系统能力适配 |
+| [integrations](integrations/README.md) | Agent 来源适配（后期扩展） |
+| [contracts](contracts/ports.md) | 接口与 [Wire 草案](contracts/protocol.md) |
+| [config](config/README.md) | 设备和通信组合配置 |
+| [docs/research](docs/research/architecture.md) | 架构与历史调研 |
+| [AGENT.md](AGENT.md) | 开发、测试、推送规范 |
 
-## 路线图
+## 启动 PC 客户端
 
-| 阶段 | 内容 | 状态 |
-|---|---|---|
-| **M0** PoC | P1~P8 探针（按键/保活/功耗/长连/录音/播放/runtime/快捷键），通知形态打通 Claude Code → PC → 手表 | 🔄 进行中：**P1 按键✅、传感器出数✅**（[报告 r2](docs/device-probe/probe-report-r2.md)：12 路 PPG 246.7Hz 免权限直读 + 亮屏门控发现），待 PC 桥接 |
-| **M1** 宠物页 | 手表宠物页（五态动画 + 任务气泡）+ Wi-Fi 长连 + Claude Code 适配器 | ⏸ 待启动 |
-| **M2** 语音 | Qoder / Codex 适配器 + 语音输入 + 实时对话 | ⏸ |
-| **M3** 组件中心 | 声明式组件 + 形象导入 + 音效 + 桌面端设置 | ⏸ |
-| **M4** 稳定性 | WorkBuddy 日志适配 + 豆包兜底 + 功耗打磨 | ⏸ |
+需要 Node.js 22.12+，在根目录执行：
 
-## 必须先泼的三盆冷水 💧
+```sh
+npm ci
+npm start
+```
 
-1. **宠物不能成为表盘。** OPPO 表盘是私有格式，第三方无法注册。产品叙事是「一键唤起的宠物 App / 充电底座桌宠」，不是「桌面变宠物」。
-2. **只有 32 位。** `armeabi-v7a` 独占，无 64 位，重型 runtime（wasmtime/V8）全部排除，组件脚本只能上 wasm3 / wasmi / QuickJS。
-3. **后台策略收紧。** ColorOS Watch 官方「不支持应用后台运行」，常驻只有前台服务一条路，且系统功耗条款（后台 sensor 持有 ≤1s、非 IM 禁后台联网）是 ROM 层事实，侧载也绕不过。
+支持模拟健康看板、本地采集目录查看与切换、设备与通道切换、导入配置、窗口置顶和复制文本。默认使用模拟设备，不访问真实手表。
 
-详见 [设计调研 §7](docs/research/design-research.md) 与 [官方资料汇编 §3 判读](docs/official-docs/oppo-wear-dev-notes.md)。
+验证：`npm test`、`npm run test:desktop`；打包：`npm run pack` 或 `npm run dist`。详见[开发与插件指南](docs/development/desktop-runtime.md)。
 
-## 贡献
+## OPPO 探针
 
-欢迎任何形态的贡献：其他 OPPO / 一加手表机型的探针报告、文档纠错、判读经验、组件创意。见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+先阅读[设备说明](devices/oppo-watch-4-pro/README.md)，在仓库根目录执行：
 
-## 免责声明
+```powershell
+# 只读基线探针（需 adb，真机操作由用户执行）
+powershell -NoProfile -ExecutionPolicy Bypass -File devices/oppo-watch-4-pro/tools/verify-watch.ps1
+# 构建探针 APK（需 JDK 与 Android SDK）
+powershell -NoProfile -ExecutionPolicy Bypass -File devices/oppo-watch-4-pro/probe/build.ps1
+# 真机测试：安装 APK、授权传感器并采集日志
+powershell -NoProfile -ExecutionPolicy Bypass -File devices/oppo-watch-4-pro/tools/device-test.ps1
+```
 
-- 本项目为**个人自用的侧载调研**，不修改系统分区、不 root、不刷机，卸载 App 即完全还原手表。
-- 健康数据相关内容**非医疗器械级**，不用于诊断，异常请就医，本项目不做异常报警承诺。
-- 官方条款以 OPPO 开放平台最新页面为准；本项目不与 OPPO 存在隶属关系，"OPPO" 仅为设备描述用途。
+adb 放在 tools/platform-tools/ 或 PATH；SDK 可放在根目录 android-sdk/，或用构建参数指定。Windows 双击入口位于设备 tools 目录。
 
-## License
+下一步接入真实手表通信与可靠链路，完成配对与 BLE 验证；之后再评估 Agent 状态接入与自定义模型分析。Windows/macOS/Linux 已配置独立 CI 构建，其他系统的实际运行结果以对应验证为准。
 
-[MIT](LICENSE) © 2026 mozzie
+展示名已改为 watch-agent-pet；当前本地文件夹及远程仓库地址未自动改名，见[迁移说明](docs/research/architecture.md#7-分阶段落地与迁移)。
+
+健康数据非医疗器械、不用于诊断，异常请就医。项目不 root、不刷机、不修改系统分区，不隶属任何手表厂商。
+
+[贡献指南](CONTRIBUTING.md) · [MIT License](LICENSE)
 
 > AI生成

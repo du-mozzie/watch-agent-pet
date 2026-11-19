@@ -1,5 +1,7 @@
 # 通信通道选型（v1，2026-11-19）
 
+> 本文保留 OPPO 场景的历史假设和选型，不代表已实现能力。最新模块边界以 [v3 总体架构](architecture.md)为准，协议以[当前草案](../../contracts/protocol.md)为准。
+
 > 场景前提：**白天佩戴**是主场景（健康数据 + 宠物状态），表放桌上/充电底座是次场景。
 > 本文回答「手表 ↔ PC 用什么协议」，结论先行：**桥接层双通道：BLE 优先（近场、佩戴场景）+ Wi-Fi 局域网备选（固定工位）**，上层协议统一。
 
@@ -10,7 +12,7 @@
 | 流量 | 方向 | 量级 | 频率 |
 |---|---|---|---|
 | 健康数据帧 | 手表 → PC | 每帧 <1KB（聚合后） | 每分钟~每秒级 |
-| Agent 状态六态 | PC → 手表 | <200B/帧 | 事件驱动 |
+| Agent 状态（后期扩展） | Agent 来源 → PC | <200B/帧 | 事件驱动（不下发手表） |
 | 宠物控制（点按/语音起止） | 手表 → PC | <100B | 事件驱动 |
 | 语音音频 | 手表 → PC | 低码率压缩后 ~16KB/s | 会话中 |
 
@@ -30,7 +32,7 @@
 
 ## 3 决策
 
-1. **上层协议不变**：六态事件模型（`idle|thinking|running|waiting|done|error`）+ 健康帧 JSON、<4KB/帧、带序号与 ACK——通道无关，做成可插拔 transport。
+1. **上层协议不变**：健康帧 JSON、<4KB/帧、带序号与 ACK——通道无关，做成可插拔 transport。六态事件模型（`idle|thinking|running|waiting|done|error`）保留为协议扩展位（Agent 来源 → PC，后期扩展；2026-11-19 起不下发手表）。
 2. **通道层双轨**：
    - **主：BLE GATT**（手表做 peripheral，自定义 Service，PC/手机做 central）——待 P9 真机验证（ColorOS Watch 第三方 App 的 GATT server 可用性、后台广播限制）
    - **备：Wi-Fi 局域网 TCP/WebSocket**（PC 固定工位场景；已验证 adb tcpip 走通）

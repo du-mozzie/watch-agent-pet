@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "oppo-watch-4-pro",
+  "displayName": "OPPO Watch 4 Pro",
+  "models": ["OWW221"],
+  "runtime": "android",
+  "adapterStatus": "not-implemented",
+  "observed": {
+    "api": 30,
+    "abi": ["armeabi-v7a"],
+    "displayPixels": {"width": 378, "height": 496}
+  },
+  "probe": {"package": "com.owapet.sensorprobe", "path": "probe"},
+  "evidence": ["docs/reports/probe-report-r1.md", "docs/reports/probe-report-r2.md"],
+  "capabilities": {
+    "rawSensorsWhileScreenOn": "verified",
+    "healthMeasurementsWhileWorn": "pending",
+    "backgroundContinuity": "pending"
+  },
+  "transportCandidates": [
+    {"id": "ble-gatt", "status": "pending-P9"},
+    {"id": "websocket", "status": "not-implemented"}
+  ]
+}
